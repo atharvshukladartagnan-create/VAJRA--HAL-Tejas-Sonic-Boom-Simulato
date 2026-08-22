@@ -114,8 +114,10 @@ tab_tejas, tab_isro, tab_brahmos, tab_about = st.tabs(["HAL TEJAS", "ISRO LAUNCH
 # ============================================================
 with tab_tejas:
     st.sidebar.markdown('<p class="section-header">Tejas Controls</p>', unsafe_allow_html=True)
-    mach = st.sidebar.slider("Mach Number", 0.1, 3.0, 0.8, 0.01)
-    altitude = st.sidebar.slider("Altitude (m)", 0, 20000, 5000, 100)
+    mach = st.sidebar.slider("Mach Number", 0.1, 1.8, 0.8, 0.01,
+        help="Mach number = aircraft speed ÷ speed of sound. Tejas Mk1A tops out at Mach 1.8.")
+    altitude = st.sidebar.slider("Altitude (m)", 0, 16500, 5000, 100,
+        help="Height above sea level. Tejas service ceiling is 16,500 m (54,000 ft). Air gets thinner as you go up.")
 
     TEJAS_WING_AREA = 38.4
     TEJAS_MASS = 9800
@@ -156,11 +158,18 @@ with tab_tejas:
       <div class="spec-item"><span class="spec-val">{speed_of_sound:.0f}</span><span class="spec-label">Sound m/s</span></div>
       <div class="spec-item"><span class="spec-val">{aircraft_speed:.0f}</span><span class="spec-label">Speed m/s</span></div>
       <div class="spec-item"><span class="spec-val">{aircraft_speed*3.6:.0f}</span><span class="spec-label">km/h</span></div>
-      <div class="spec-item"><span class="spec-val">{rho:.4f}</span><span class="spec-label">Density</span></div>
+      <div class="spec-item"><span class="spec-val">{rho:.4f}</span><span class="spec-label">Density kg/m³</span></div>
       <div class="spec-item"><span class="spec-val">{q:.0f}</span><span class="spec-label">Q (Pa)</span></div>
       <div class="spec-item"><span class="spec-val">{g_load:.2f}</span><span class="spec-label">G-Load</span></div>
     </div>
     """, unsafe_allow_html=True)
+    with st.sidebar.expander("What do these mean?"):
+        st.markdown("""
+- **Sound m/s** — Speed of sound at this altitude. Changes with temperature.
+- **Density** — Air density (kg/m³). Sea level ≈ 1.225. Thinner air = less lift and drag.
+- **Q (Pa)** — Dynamic pressure = ½ × density × speed². The force air exerts on the aircraft. All aerodynamic forces depend on this.
+- **G-Load** — Multiple of gravity felt. 1G = normal. Fighter pilots train for up to 9G.
+        """)
 
     st.sidebar.markdown("---")
     st.sidebar.markdown('<p class="section-header">Tejas Mk1A</p>', unsafe_allow_html=True)
@@ -187,6 +196,20 @@ with tab_tejas:
     </div>
     """, unsafe_allow_html=True)
 
+    with st.expander("What do these numbers mean?"):
+        st.markdown("""
+**Mach Number** — How many times faster than sound you're flying. Mach 1 = speed of sound (~340 m/s at sea level). Below Mach 1 is *subsonic*, above is *supersonic*.
+
+**Altitude** — Height above sea level in kilometres. The higher you go, the thinner the air and the colder it gets.
+
+**OAT (Outside Air Temperature)** — The actual air temperature at your altitude. At sea level it's about 15°C. At 11 km (where airliners cruise) it drops to about −56°C.
+
+**Speed (m/s & km/h)** — Your true airspeed. This depends on both Mach number *and* altitude because sound travels slower in colder air.
+
+**G-Load** — How many times your own weight you feel. Sitting still = 1G. In a sharp turn, a fighter pilot can pull 9G — meaning they feel 9× their body weight.
+        """)
+
+
     # Alerts
     if mach >= 1.0:
         ha = np.degrees(np.arcsin(1 / mach))
@@ -196,8 +219,6 @@ with tab_tejas:
         st.markdown('<div class="alert-box alert-transonic">⚠ TRANSONIC — Wave drag rising</div>', unsafe_allow_html=True)
     else:
         st.markdown('<div class="alert-box alert-normal">✓ SUBSONIC — Normal conditions</div>', unsafe_allow_html=True)
-    if mach > TEJAS_MAX_MACH:
-        st.markdown(f'<div class="alert-box alert-limit">⛔ BEYOND MAX Mach {TEJAS_MAX_MACH}</div>', unsafe_allow_html=True)
     if altitude > TEJAS_CEILING:
         st.markdown(f'<div class="alert-box alert-limit">⛔ ABOVE CEILING {TEJAS_CEILING/1000:.1f} km</div>', unsafe_allow_html=True)
 
@@ -259,6 +280,17 @@ with tab_tejas:
         plotly_hud_layout(fig2, height=500)
         st.plotly_chart(fig2, use_container_width=True)
 
+    with st.expander("What are shockwaves and sonic booms?"):
+        st.markdown("""
+**Shockwave (Mach Cone)** — When an aircraft flies faster than sound, air can't move out of the way fast enough. It piles up into a cone-shaped shockwave trailing behind the jet, like the V-shaped wake behind a boat. The faster you go, the narrower the cone.
+
+**Mach Cone Angle** — The half-angle of the cone is θ = arcsin(1/Mach). At Mach 1, the cone is flat (90°). At Mach 1.8 (Tejas max), it narrows to about 34°.
+
+**N-Wave (Sonic Boom Pressure)** — On the ground, a sonic boom sounds like a double bang. The pressure spikes up sharply (front shock), drops below normal (expansion), then spikes again (rear shock). This "N" shape is why it's called an N-wave. The faster and lower the jet, the louder the boom.
+
+**Subsonic pressure** — Below Mach 1, there's no shockwave. Air pressure smoothly increases ahead of the aircraft and decreases behind it — no sonic boom.
+        """)
+
     # Forces + Envelope
     st.markdown("---")
     cf1, cf2 = st.columns(2)
@@ -302,12 +334,26 @@ with tab_tejas:
         fig4.update_layout(xaxis=dict(title="Mach"), yaxis=dict(title="Altitude (km)"))
         st.plotly_chart(fig4, use_container_width=True)
 
+    with st.expander("What are the four forces and the flight envelope?"):
+        st.markdown("""
+**The Four Forces of Flight** — Every aircraft in flight has exactly four forces acting on it:
+
+- **Lift** (↑) — Generated by the wings. Air moves faster over the curved top surface, creating lower pressure above than below. This pressure difference pushes the wing up. Lift must equal weight for level flight.
+- **Weight** (↓) — Gravity pulling the aircraft down. For Tejas: ~9,800 kg × 9.81 m/s² ≈ 96 kN.
+- **Thrust** (→) — The engine pushing forward. Tejas uses a GE F404 afterburning turbofan producing up to 89 kN.
+- **Drag** (←) — Air resistance slowing the aircraft down. Thrust must overcome drag to maintain speed.
+
+When Lift = Weight, the aircraft holds altitude. When Thrust = Drag, it holds speed. The bar chart shows all four in kN (kilonewtons) so you can see the balance.
+
+**Flight Envelope** — The orange shaded area shows where the Tejas *can* fly — every valid combination of Mach and altitude. Outside this boundary, the aircraft either can't generate enough lift (too slow/too high) or exceeds structural limits. Your current position is the blue star.
+        """)
+
     # Drag + Atmosphere
     st.markdown("---")
     cd1, cd2 = st.columns(2)
     with cd1:
         st.markdown('<p class="section-header">Drag vs Mach</p>', unsafe_allow_html=True)
-        mr = np.linspace(0.1, 3.0, 300)
+        mr = np.linspace(0.1, 1.8, 300)
         cdc = []
         for m in mr:
             if m < 0.8: c = TEJAS_DRAG_CD0 + 0.06*(m**2)
@@ -315,9 +361,9 @@ with tab_tejas:
             else: c = TEJAS_DRAG_CD0 + 0.06*(m**2) + 0.015/(m**2)
             cdc.append(c)
         fig5 = go.Figure()
-        fig5.add_vrect(x0=0.1, x1=0.8, fillcolor="rgba(0,200,100,0.05)", line_width=0, annotation_text="Sub", annotation_position="top left", annotation_font=dict(color='rgba(0,200,100,0.5)', size=9))
-        fig5.add_vrect(x0=0.8, x1=1.2, fillcolor="rgba(255,165,0,0.05)", line_width=0, annotation_text="Trans", annotation_position="top left", annotation_font=dict(color='rgba(255,165,0,0.5)', size=9))
-        fig5.add_vrect(x0=1.2, x1=3.0, fillcolor="rgba(255,50,50,0.05)", line_width=0, annotation_text="Super", annotation_position="top left", annotation_font=dict(color='rgba(255,50,50,0.5)', size=9))
+        fig5.add_vrect(x0=0.1, x1=0.8, fillcolor="rgba(0,200,100,0.05)", line_width=0, annotation_text="Subsonic", annotation_position="top left", annotation_font=dict(color='rgba(0,200,100,0.5)', size=9))
+        fig5.add_vrect(x0=0.8, x1=1.2, fillcolor="rgba(255,165,0,0.05)", line_width=0, annotation_text="Transonic", annotation_position="top left", annotation_font=dict(color='rgba(255,165,0,0.5)', size=9))
+        fig5.add_vrect(x0=1.2, x1=1.8, fillcolor="rgba(255,50,50,0.05)", line_width=0, annotation_text="Supersonic", annotation_position="top left", annotation_font=dict(color='rgba(255,50,50,0.5)', size=9))
         fig5.add_trace(go.Scatter(x=mr, y=cdc, mode='lines', line=dict(color='#ff6b35', width=2.5), name='CD'))
         fig5.add_trace(go.Scatter(x=[mach], y=[cd], mode='markers', marker=dict(size=12, color='#00f0ff'), name=f'CD={cd:.4f}'))
         plotly_hud_layout(fig5, height=400)
@@ -335,6 +381,25 @@ with tab_tejas:
         plotly_hud_layout(fig6, height=400)
         fig6.update_layout(xaxis=dict(title="Temperature (°C)"), yaxis=dict(title="Altitude (km)"))
         st.plotly_chart(fig6, use_container_width=True)
+
+    with st.expander("What are drag coefficient and ISA atmosphere?"):
+        st.markdown("""
+**Drag Coefficient (CD)** — A dimensionless number that captures how much air resistance an aircraft has at a given speed. Lower CD = more aerodynamic.
+
+- **Subsonic (< Mach 0.8):** Drag is mostly skin friction — air sliding along the aircraft surface. CD rises gently.
+- **Transonic (Mach 0.8–1.2):** The "sound barrier." Some air over the wings goes supersonic while the rest stays subsonic, creating shockwaves on the surface. Drag *spikes* — this is called the **transonic drag rise**. This is the hardest region to fly through.
+- **Supersonic (> Mach 1.2):** The aircraft is fully through the sound barrier. Drag actually *drops* a bit from the transonic peak, but stays higher than subsonic.
+
+The blue dot shows your current CD. Watch it jump as you cross Mach 0.8–1.0.
+
+**ISA (International Standard Atmosphere)** — A mathematical model of how temperature, pressure, and air density change with altitude. Used worldwide in aviation.
+
+- **Troposphere (0–11 km):** Temperature drops steadily at 6.5°C per km. Most weather happens here.
+- **Tropopause (11 km):** Temperature stops dropping and holds at −56.5°C. This is marked by the yellow dotted line.
+- **Stratosphere (11–20 km):** Temperature stays roughly constant. Air is very thin up here.
+
+Pilots and engineers need ISA to calculate true airspeed, lift, and engine performance at any altitude.
+        """)
 
     # Sonic boom footprint
     if mach >= 1.0:
@@ -354,6 +419,17 @@ with tab_tejas:
         fig7.update_layout(xaxis=dict(title="Lateral Distance (km)"), yaxis=dict(title="Overpressure"))
         st.plotly_chart(fig7, use_container_width=True)
 
+        with st.expander("What is a sonic boom footprint?"):
+            st.markdown(f"""
+**Sonic Boom Footprint** — When a supersonic jet flies overhead, its shockwave cone hits the ground in a strip. Everyone inside this strip hears the sonic boom.
+
+- **Width** depends on altitude and Mach cone angle. At your current settings, the boom strip is about **{bw:.1f} km wide**.
+- **Peak overpressure** is strongest directly below the aircraft and fades toward the edges. A typical fighter sonic boom produces about 1–2 pounds per square foot of overpressure — enough to rattle windows.
+- At higher altitudes the boom spreads wider but gets weaker. At lower altitudes it's narrower but much louder.
+
+Fun fact: Concorde's sonic boom was heard as a sharp double crack. The Tejas, being smaller, would produce a shorter, sharper boom.
+            """)
+
 
 # ============================================================
 # TAB 2: ISRO LAUNCH SIMULATOR
@@ -361,6 +437,18 @@ with tab_tejas:
 with tab_isro:
     st.markdown('<p class="section-header">ISRO Launch Vehicle Simulator</p>', unsafe_allow_html=True)
     st.markdown('<div class="alert-box alert-info">Simulate PSLV and GSLV launch trajectories with real stage parameters</div>', unsafe_allow_html=True)
+
+    with st.expander("New to rockets? Start here"):
+        st.markdown("""
+**Why do rockets have stages?** A rocket has to carry its own fuel, and fuel is heavy. Once a stage burns out, it's dead weight — so the rocket drops it. Each stage that falls away means less mass to accelerate, making the remaining stages far more efficient. This is the idea behind the **Tsiolkovsky rocket equation**.
+
+**Key terms you'll see below:**
+- **Thrust (kN)** — The force the engine produces. More thrust = more acceleration.
+- **Burn time (s)** — How long each stage fires before it runs out of fuel.
+- **Isp (specific impulse, seconds)** — A measure of fuel efficiency. Higher Isp = more speed per kg of fuel. Solid motors (~270s) are less efficient than liquid (~295s), and cryogenic engines (~440s) are the best.
+- **G-force** — How many times normal gravity the astronauts/payload feel. Humans can tolerate about 6G for short periods.
+- **Payload** — The satellite or spacecraft the rocket is carrying to orbit.
+        """)
 
     rockets = {
         "PSLV-XL": {
@@ -495,6 +583,20 @@ with tab_isro:
     </div>
     """, unsafe_allow_html=True)
 
+    with st.expander("Understanding the trajectory plots"):
+        st.markdown(f"""
+**Altitude vs Time** — Shows the rocket climbing. The dotted vertical lines mark **stage separations** — moments when an empty stage drops away. Notice the altitude climbs faster after each separation because the rocket is lighter.
+
+**Velocity Profile** — Speed keeps building with each stage. To reach orbit, a rocket needs about **7,800 m/s** (28,000 km/h). That's roughly 23× the speed of sound.
+
+**G-Force Profile** — As fuel burns, the rocket gets lighter, but thrust stays the same — so acceleration (and G-force) *increases* throughout each stage. The jumps happen at stage separation when thrust suddenly changes. The red dashed line at 6G is the approximate human tolerance limit.
+
+**{selected_rocket} quick facts:**
+- Total liftoff mass: **{rocket['total_mass']/1000:.0f} tonnes** — most of that is fuel
+- Number of stages: **{len(rocket['stages'])}**
+- {rocket['missions']} successful missions and counting
+        """)
+
 
 # ============================================================
 # TAB 3: BRAHMOS
@@ -503,10 +605,23 @@ with tab_brahmos:
     st.markdown('<p class="section-header">BrahMos Supersonic Cruise Missile</p>', unsafe_allow_html=True)
     st.markdown('<div class="alert-box alert-info">Simulate BrahMos flight trajectory — the world\'s fastest cruise missile in service</div>', unsafe_allow_html=True)
 
+    with st.expander("What is BrahMos? (Background)"):
+        st.markdown("""
+**BrahMos** is a joint India-Russia supersonic cruise missile, named after the rivers **Brahma**putra (India) and **Mos**kva (Russia). It's the fastest cruise missile in operational service worldwide.
+
+**Key concepts:**
+- **Cruise missile** — A missile that flies like an aircraft at a set altitude, using wings for lift and an engine for sustained flight (unlike ballistic missiles that arc through space).
+- **Ramjet engine** — A jet engine with no moving parts. It uses the missile's own speed to compress incoming air. Brilliant above Mach 2, but it can't start from standstill — that's why BrahMos uses a solid rocket booster to get up to speed first.
+- **Scramjet** — A *supersonic combustion* ramjet, used in BrahMos-II. Air flows through the engine at supersonic speeds even inside the combustion chamber. This enables Mach 7+ speeds.
+- **Sea-skimming** — In the final phase, the missile drops to 10–15 m above the sea. At this altitude it's nearly invisible to ship radar until the last few seconds.
+- **Variants:** Block III (standard, Mach 2.8), BrahMos-ER (extended range, 800 km), BrahMos-II (future hypersonic, Mach 7).
+        """)
+
     bcol1, bcol2 = st.columns([1, 2])
     with bcol1:
         brahmos_variant = st.selectbox("Variant", ["BrahMos Block III", "BrahMos-II (Hypersonic)", "BrahMos-ER"])
-        target_range = st.slider("Target Range (km)", 50, 800, 290)
+        target_range = st.slider("Target Range (km)", 50, 800, 290,
+            help="Distance to the target. BrahMos Block III has a 450 km range, BrahMos-ER reaches 800 km.")
 
         specs = {
             "BrahMos Block III": {"speed_mach": 2.8, "range": 450, "weight": 3000, "warhead": 200, "altitude_cruise": 15000, "altitude_sea_skim": 10, "engine": "Ramjet"},
@@ -591,6 +706,21 @@ with tab_brahmos:
     At this speed, the missile covers 1 km every {1000/cruise_speed:.1f} seconds.
     </div>
     """, unsafe_allow_html=True)
+
+    with st.expander("Understanding the flight profile"):
+        st.markdown(f"""
+**The three phases of a BrahMos strike:**
+
+1. **Climb phase** (0–{climb_dist:.0f} km) — After launch, the solid rocket booster fires and the missile climbs steeply to cruising altitude. The booster drops off and the ramjet ignites.
+
+2. **Cruise phase** ({climb_dist:.0f}–{climb_dist+cruise_dist:.0f} km) — The missile flies at Mach {sp['speed_mach']} at {cruise_alt/1000:.0f} km altitude. At this height it's hard to detect but high enough for efficient flight.
+
+3. **Terminal dive** (last {dive_dist:.0f} km) — The missile dives toward the target. For anti-ship strikes it drops to just {sea_skim_alt} metres above the sea (sea-skimming), making it nearly impossible for ship defences to react in time.
+
+**Why is speed so important?** At Mach {sp['speed_mach']}, a defender has only **{(dive_dist*1000/cruise_speed):.1f} seconds** from the moment the missile appears on close-range radar to impact. Most ship defence systems need 8–15 seconds to react. This is what makes BrahMos so effective.
+
+**Warhead: {sp['warhead']} kg** — The kinetic energy alone at Mach {sp['speed_mach']} is devastating. The total impact energy is roughly equivalent to **{0.5 * sp['weight'] * cruise_speed**2 / 4.184e9:.1f} tonnes of TNT**.
+        """)
 
 
 # ============================================================
