@@ -2,114 +2,29 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="VAJRA - HAL Tejas Sonic Boom Simulator", layout="wide", page_icon="⚡")
+st.set_page_config(page_title="VAJRA - Indian Aerospace Simulator", layout="wide", page_icon="⚡")
 
 # --- HUD THEME CSS ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
-
-.stApp {
-    background: linear-gradient(135deg, #0a0a0f 0%, #0d1117 40%, #0a1628 100%);
-}
-
+.stApp { background: linear-gradient(135deg, #0a0a0f 0%, #0d1117 40%, #0a1628 100%); }
 .hud-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 2.8rem;
-    font-weight: 900;
+    font-family: 'Orbitron', monospace; font-size: 2.8rem; font-weight: 900;
     background: linear-gradient(90deg, #00f0ff, #00a8ff, #ff6b35);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-align: center;
-    letter-spacing: 4px;
-    text-shadow: 0 0 30px rgba(0,240,255,0.3);
-    animation: glow 2s ease-in-out infinite alternate;
-    margin-bottom: 0;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-align: center; letter-spacing: 4px;
+    animation: glow 2s ease-in-out infinite alternate; margin-bottom: 0;
 }
-
 .hud-subtitle {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 1.15rem;
-    color: #5a9fd4;
-    text-align: center;
-    letter-spacing: 6px;
-    text-transform: uppercase;
-    margin-top: 0;
+    font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; color: #5a9fd4;
+    text-align: center; letter-spacing: 6px; text-transform: uppercase; margin-top: 0;
 }
-
-@keyframes glow {
-    from { filter: brightness(1); }
-    to { filter: brightness(1.3); }
-}
-
+@keyframes glow { from { filter: brightness(1); } to { filter: brightness(1.3); } }
 @keyframes pulse-border {
     0%, 100% { border-color: rgba(0,240,255,0.3); box-shadow: 0 0 15px rgba(0,240,255,0.1); }
     50% { border-color: rgba(0,240,255,0.7); box-shadow: 0 0 25px rgba(0,240,255,0.3); }
 }
-
-.hud-card {
-    background: linear-gradient(145deg, rgba(10,22,40,0.9), rgba(5,10,20,0.95));
-    border: 1px solid rgba(0,240,255,0.3);
-    border-radius: 12px;
-    padding: 20px;
-    margin: 8px 0;
-    animation: pulse-border 3s ease-in-out infinite;
-}
-
-.hud-metric {
-    font-family: 'Orbitron', monospace;
-    text-align: center;
-    padding: 15px 10px;
-}
-.hud-metric .value {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #00f0ff;
-    text-shadow: 0 0 10px rgba(0,240,255,0.5);
-    display: block;
-}
-.hud-metric .label {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 0.8rem;
-    color: #5a9fd4;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-top: 4px;
-    display: block;
-}
-
-.regime-badge {
-    font-family: 'Orbitron', monospace;
-    font-size: 1rem;
-    padding: 8px 20px;
-    border-radius: 25px;
-    text-align: center;
-    font-weight: 700;
-    letter-spacing: 3px;
-    display: inline-block;
-    margin: 5px auto;
-}
-.regime-subsonic {
-    background: rgba(0,200,100,0.15);
-    border: 2px solid #00c864;
-    color: #00ff7f;
-    box-shadow: 0 0 15px rgba(0,200,100,0.3);
-}
-.regime-transonic {
-    background: rgba(255,165,0,0.15);
-    border: 2px solid #ffa500;
-    color: #ffb733;
-    box-shadow: 0 0 15px rgba(255,165,0,0.3);
-    animation: pulse-border-warn 1.5s ease-in-out infinite;
-}
-.regime-supersonic {
-    background: rgba(255,50,50,0.15);
-    border: 2px solid #ff3232;
-    color: #ff4444;
-    box-shadow: 0 0 20px rgba(255,50,50,0.4);
-    animation: pulse-border-danger 1s ease-in-out infinite;
-}
-
 @keyframes pulse-border-warn {
     0%, 100% { box-shadow: 0 0 15px rgba(255,165,0,0.2); }
     50% { box-shadow: 0 0 30px rgba(255,165,0,0.5); }
@@ -118,590 +33,649 @@ st.markdown("""
     0%, 100% { box-shadow: 0 0 15px rgba(255,50,50,0.3); }
     50% { box-shadow: 0 0 35px rgba(255,50,50,0.7); }
 }
-
-.tejas-svg-container {
-    text-align: center;
-    margin: 10px 0;
+.hud-card {
+    background: linear-gradient(145deg, rgba(10,22,40,0.9), rgba(5,10,20,0.95));
+    border: 1px solid rgba(0,240,255,0.3); border-radius: 12px;
+    padding: 20px; margin: 8px 0; animation: pulse-border 3s ease-in-out infinite;
 }
-
-.specs-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    font-family: 'Rajdhani', sans-serif;
+.hud-metric { font-family: 'Orbitron', monospace; text-align: center; padding: 15px 10px; }
+.hud-metric .value {
+    font-size: 1.8rem; font-weight: 700; color: #00f0ff;
+    text-shadow: 0 0 10px rgba(0,240,255,0.5); display: block;
 }
+.hud-metric .label {
+    font-family: 'Rajdhani', sans-serif; font-size: 0.8rem; color: #5a9fd4;
+    text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; display: block;
+}
+.regime-badge {
+    font-family: 'Orbitron', monospace; font-size: 1rem; padding: 8px 20px;
+    border-radius: 25px; text-align: center; font-weight: 700;
+    letter-spacing: 3px; display: inline-block; margin: 5px auto;
+}
+.regime-subsonic { background: rgba(0,200,100,0.15); border: 2px solid #00c864; color: #00ff7f; }
+.regime-transonic { background: rgba(255,165,0,0.15); border: 2px solid #ffa500; color: #ffb733; animation: pulse-border-warn 1.5s ease-in-out infinite; }
+.regime-supersonic { background: rgba(255,50,50,0.15); border: 2px solid #ff3232; color: #ff4444; animation: pulse-border-danger 1s ease-in-out infinite; }
+.specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-family: 'Rajdhani', sans-serif; }
 .spec-item {
-    background: rgba(0,240,255,0.05);
-    border: 1px solid rgba(0,240,255,0.15);
-    border-radius: 8px;
-    padding: 8px 12px;
-    text-align: center;
+    background: rgba(0,240,255,0.05); border: 1px solid rgba(0,240,255,0.15);
+    border-radius: 8px; padding: 8px 12px; text-align: center;
 }
-.spec-item .spec-val {
-    font-family: 'Orbitron', monospace;
-    font-size: 1.05rem;
-    color: #00f0ff;
-    display: block;
-}
-.spec-item .spec-label {
-    font-size: 0.7rem;
-    color: #5a9fd4;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
+.spec-item .spec-val { font-family: 'Orbitron', monospace; font-size: 1.05rem; color: #00f0ff; display: block; }
+.spec-item .spec-label { font-size: 0.7rem; color: #5a9fd4; text-transform: uppercase; letter-spacing: 1px; }
 .section-header {
-    font-family: 'Orbitron', monospace;
-    font-size: 1.1rem;
-    color: #00f0ff;
-    letter-spacing: 3px;
-    border-bottom: 1px solid rgba(0,240,255,0.3);
-    padding-bottom: 8px;
-    margin-bottom: 15px;
-    text-transform: uppercase;
+    font-family: 'Orbitron', monospace; font-size: 1.1rem; color: #00f0ff;
+    letter-spacing: 3px; border-bottom: 1px solid rgba(0,240,255,0.3);
+    padding-bottom: 8px; margin-bottom: 15px; text-transform: uppercase;
 }
-
-.alert-box {
-    font-family: 'Rajdhani', sans-serif;
-    padding: 12px 20px;
-    border-radius: 8px;
-    margin: 5px 0;
-    font-size: 1rem;
-    letter-spacing: 1px;
-}
-.alert-boom {
-    background: rgba(255,50,50,0.1);
-    border-left: 4px solid #ff3232;
-    color: #ff6b6b;
-    animation: pulse-border-danger 1.5s ease-in-out infinite;
-}
-.alert-transonic {
-    background: rgba(255,165,0,0.1);
-    border-left: 4px solid #ffa500;
-    color: #ffb733;
-}
-.alert-normal {
-    background: rgba(0,200,100,0.1);
-    border-left: 4px solid #00c864;
-    color: #00ff7f;
-}
-.alert-limit {
-    background: rgba(255,0,0,0.1);
-    border-left: 4px solid #ff0000;
-    color: #ff4444;
-}
-
-div[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #060d18, #0a1628, #060d18);
-    border-right: 1px solid rgba(0,240,255,0.2);
-}
+.alert-box { font-family: 'Rajdhani', sans-serif; padding: 12px 20px; border-radius: 8px; margin: 5px 0; font-size: 1rem; letter-spacing: 1px; }
+.alert-boom { background: rgba(255,50,50,0.1); border-left: 4px solid #ff3232; color: #ff6b6b; animation: pulse-border-danger 1.5s ease-in-out infinite; }
+.alert-transonic { background: rgba(255,165,0,0.1); border-left: 4px solid #ffa500; color: #ffb733; }
+.alert-normal { background: rgba(0,200,100,0.1); border-left: 4px solid #00c864; color: #00ff7f; }
+.alert-limit { background: rgba(255,0,0,0.1); border-left: 4px solid #ff0000; color: #ff4444; }
+.alert-info { background: rgba(0,150,255,0.1); border-left: 4px solid #00a8ff; color: #5ac8fa; }
+div[data-testid="stSidebar"] { background: linear-gradient(180deg, #060d18, #0a1628, #060d18); border-right: 1px solid rgba(0,240,255,0.2); }
+div[data-testid="stTabs"] button { font-family: 'Orbitron', monospace !important; letter-spacing: 2px !important; }
 </style>
 """, unsafe_allow_html=True)
 
+
+def plotly_hud_layout(fig, height=450, **kwargs):
+    fig.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(8,12,22,0.9)',
+        height=height, margin=dict(l=50, r=20, t=40, b=40),
+        xaxis=dict(gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
+        yaxis=dict(gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
+        **kwargs
+    )
+
+
+def isa_atmosphere(alt):
+    if alt <= 11000:
+        t = 288.15 - 0.0065 * alt
+        p = 101325 * (t / 288.15) ** 5.2561
+    else:
+        t = 216.65
+        p = 22632 * np.exp(-0.00015769 * (alt - 11000))
+    rho = p / (287.05 * t)
+    a = np.sqrt(1.4 * 287.05 * t)
+    return t, p, rho, a
+
+
 # --- HEADER ---
 st.markdown('<h1 class="hud-title">VAJRA</h1>', unsafe_allow_html=True)
-st.markdown('<p class="hud-subtitle">HAL Tejas Mk1A &bull; Sonic Boom Simulator</p>', unsafe_allow_html=True)
+st.markdown('<p class="hud-subtitle">Indian Aerospace Simulator Platform</p>', unsafe_allow_html=True)
 
-# --- SVG JET SILHOUETTE ---
-tejas_svg = """
-<div class="tejas-svg-container">
-<svg width="320" height="80" viewBox="0 0 320 80" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="jetGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#003366;stop-opacity:0.8"/>
-      <stop offset="50%" style="stop-color:#00a8ff;stop-opacity:0.9"/>
-      <stop offset="100%" style="stop-color:#00f0ff;stop-opacity:0.7"/>
-    </linearGradient>
-    <filter id="jetGlow">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
-  </defs>
-  <g transform="translate(40,40)" filter="url(#jetGlow)">
-    <polygon points="240,0 200,-6 140,-8 80,-18 60,-22 50,-18 30,-10 0,-4 0,4 30,10 50,18 60,22 80,18 140,8 200,6"
-             fill="url(#jetGrad)" stroke="#00f0ff" stroke-width="0.8" opacity="0.85"/>
-    <polygon points="90,-18 70,-35 60,-35 75,-18" fill="#004488" stroke="#00a8ff" stroke-width="0.5" opacity="0.7"/>
-    <polygon points="90,18 70,35 60,35 75,18" fill="#004488" stroke="#00a8ff" stroke-width="0.5" opacity="0.7"/>
-    <polygon points="190,-6 175,-16 170,-16 182,-6" fill="#004488" stroke="#00a8ff" stroke-width="0.5" opacity="0.7"/>
-    <polygon points="190,6 175,16 170,16 182,6" fill="#004488" stroke="#00a8ff" stroke-width="0.5" opacity="0.7"/>
-    <circle cx="210" cy="0" r="3" fill="#00f0ff" opacity="0.6"/>
-    <line x1="-5" y1="0" x2="-25" y2="-3" stroke="#ff6b35" stroke-width="2.5" opacity="0.7"/>
-    <line x1="-5" y1="0" x2="-25" y2="3" stroke="#ff6b35" stroke-width="2.5" opacity="0.7"/>
-    <line x1="-5" y1="0" x2="-30" y2="0" stroke="#ffaa00" stroke-width="1.5" opacity="0.5"/>
-  </g>
-</svg>
-</div>
-"""
-st.markdown(tejas_svg, unsafe_allow_html=True)
+# --- TABS ---
+tab_tejas, tab_isro, tab_brahmos, tab_about = st.tabs(["HAL TEJAS", "ISRO LAUNCH", "BRAHMOS", "ABOUT"])
 
-# --- SIDEBAR ---
-st.sidebar.markdown('<p class="section-header">Flight Controls</p>', unsafe_allow_html=True)
-mach = st.sidebar.slider("Mach Number", 0.1, 3.0, 0.8, 0.01)
-altitude = st.sidebar.slider("Altitude (m)", 0, 20000, 5000, 100)
 
-TEJAS_WING_AREA = 38.4
-TEJAS_MASS = 9800
-TEJAS_MAX_MACH = 1.8
-TEJAS_CEILING = 16500
-TEJAS_MAX_THRUST = 89.0
-TEJAS_DRAG_CD0 = 0.02
+# ============================================================
+# TAB 1: HAL TEJAS
+# ============================================================
+with tab_tejas:
+    st.sidebar.markdown('<p class="section-header">Tejas Controls</p>', unsafe_allow_html=True)
+    mach = st.sidebar.slider("Mach Number", 0.1, 3.0, 0.8, 0.01)
+    altitude = st.sidebar.slider("Altitude (m)", 0, 20000, 5000, 100)
 
-if altitude <= 11000:
-    temp = 288.15 - 0.0065 * altitude
-    pressure_atm = 101325 * (temp / 288.15) ** 5.2561
-else:
-    temp = 216.65
-    pressure_atm = 22632 * np.exp(-0.00015769 * (altitude - 11000))
+    TEJAS_WING_AREA = 38.4
+    TEJAS_MASS = 9800
+    TEJAS_MAX_MACH = 1.8
+    TEJAS_CEILING = 16500
+    TEJAS_MAX_THRUST = 89.0
+    TEJAS_DRAG_CD0 = 0.02
 
-rho = pressure_atm / (287.05 * temp)
-speed_of_sound = np.sqrt(1.4 * 287.05 * temp)
-aircraft_speed = mach * speed_of_sound
+    temp, pressure_atm, rho, speed_of_sound = isa_atmosphere(altitude)
+    aircraft_speed = mach * speed_of_sound
 
-if mach < 0.8:
-    regime = "SUBSONIC"
-    regime_class = "regime-subsonic"
-elif mach < 1.0:
-    regime = "TRANSONIC"
-    regime_class = "regime-transonic"
-else:
-    regime = "SUPERSONIC"
-    regime_class = "regime-supersonic"
-
-q = 0.5 * rho * aircraft_speed ** 2
-
-if mach < 0.8:
-    cd = TEJAS_DRAG_CD0 + 0.06 * (mach ** 2)
-elif mach < 1.2:
-    cd = TEJAS_DRAG_CD0 + 0.06 * (mach ** 2) + 0.2 * (mach - 0.8) ** 2
-else:
-    cd = TEJAS_DRAG_CD0 + 0.06 * (mach ** 2) + 0.015 / (mach ** 2)
-
-cl = (TEJAS_MASS * 9.81) / (q * TEJAS_WING_AREA) if q > 0 else 0
-
-drag = q * TEJAS_WING_AREA * cd
-lift = q * TEJAS_WING_AREA * cl
-weight = TEJAS_MASS * 9.81
-thrust_required = drag
-
-g_load = lift / weight if weight > 0 else 0
-
-# --- SIDEBAR INFO ---
-st.sidebar.markdown("---")
-st.sidebar.markdown(f'<div style="text-align:center"><span class="{regime_class} regime-badge">{regime}</span></div>', unsafe_allow_html=True)
-
-st.sidebar.markdown(f"""
-<div class="specs-grid">
-  <div class="spec-item"><span class="spec-val">{speed_of_sound:.0f}</span><span class="spec-label">Sound m/s</span></div>
-  <div class="spec-item"><span class="spec-val">{aircraft_speed:.0f}</span><span class="spec-label">Speed m/s</span></div>
-  <div class="spec-item"><span class="spec-val">{aircraft_speed*3.6:.0f}</span><span class="spec-label">km/h</span></div>
-  <div class="spec-item"><span class="spec-val">{rho:.4f}</span><span class="spec-label">Density kg/m³</span></div>
-  <div class="spec-item"><span class="spec-val">{q:.0f}</span><span class="spec-label">Q (Pa)</span></div>
-  <div class="spec-item"><span class="spec-val">{g_load:.2f}</span><span class="spec-label">G-Load</span></div>
-</div>
-""", unsafe_allow_html=True)
-
-st.sidebar.markdown("---")
-st.sidebar.markdown('<p class="section-header">Tejas Mk1A Specs</p>', unsafe_allow_html=True)
-st.sidebar.markdown(f"""
-<div class="specs-grid">
-  <div class="spec-item"><span class="spec-val">GE F404</span><span class="spec-label">Engine</span></div>
-  <div class="spec-item"><span class="spec-val">{TEJAS_MAX_THRUST} kN</span><span class="spec-label">Max Thrust</span></div>
-  <div class="spec-item"><span class="spec-val">M {TEJAS_MAX_MACH}</span><span class="spec-label">Max Speed</span></div>
-  <div class="spec-item"><span class="spec-val">{TEJAS_CEILING/1000:.1f} km</span><span class="spec-label">Ceiling</span></div>
-  <div class="spec-item"><span class="spec-val">{TEJAS_WING_AREA} m²</span><span class="spec-label">Wing Area</span></div>
-  <div class="spec-item"><span class="spec-val">{TEJAS_MASS/1000:.1f} t</span><span class="spec-label">Weight</span></div>
-</div>
-""", unsafe_allow_html=True)
-
-# --- HUD METRICS BAR ---
-st.markdown(f"""
-<div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
-  <div class="hud-metric"><span class="value">{mach:.2f}</span><span class="label">Mach</span></div>
-  <div class="hud-metric"><span class="value">{altitude/1000:.1f} km</span><span class="label">Altitude</span></div>
-  <div class="hud-metric"><span class="value">{temp - 273.15:.0f}°C</span><span class="label">OAT</span></div>
-  <div class="hud-metric"><span class="value">{aircraft_speed:.0f}</span><span class="label">Speed m/s</span></div>
-  <div class="hud-metric"><span class="value">{aircraft_speed*3.6:.0f}</span><span class="label">km/h</span></div>
-  <div class="hud-metric"><span class="value">{g_load:.1f}G</span><span class="label">G-Load</span></div>
-</div>
-""", unsafe_allow_html=True)
-
-# --- STATUS ALERTS ---
-if mach >= 1.0:
-    half_angle_alert = np.degrees(np.arcsin(1 / mach))
-    boom_s = 0.5 + 1.5 * (mach - 1.0)
-    st.markdown(f'<div class="alert-box alert-boom">⚡ SONIC BOOM ACTIVE — Shockwave half-angle: {half_angle_alert:.1f}° | Overpressure: {boom_s:.2f}</div>', unsafe_allow_html=True)
-elif mach >= 0.8:
-    st.markdown('<div class="alert-box alert-transonic">⚠ TRANSONIC — Wave drag rising, compressibility effects significant</div>', unsafe_allow_html=True)
-else:
-    st.markdown('<div class="alert-box alert-normal">✓ SUBSONIC — Normal aerodynamic conditions</div>', unsafe_allow_html=True)
-
-if mach > TEJAS_MAX_MACH:
-    st.markdown(f'<div class="alert-box alert-limit">⛔ BEYOND MAX — Mach {TEJAS_MAX_MACH} structural limit exceeded</div>', unsafe_allow_html=True)
-if altitude > TEJAS_CEILING:
-    st.markdown(f'<div class="alert-box alert-limit">⛔ ABOVE CEILING — {TEJAS_CEILING/1000:.1f} km service ceiling exceeded</div>', unsafe_allow_html=True)
-if thrust_required > TEJAS_MAX_THRUST * 1000:
-    st.markdown(f'<div class="alert-box alert-limit">⛔ THRUST DEFICIT — Need {thrust_required/1000:.1f} kN, max available {TEJAS_MAX_THRUST} kN</div>', unsafe_allow_html=True)
-
-# --- MAIN VISUALIZATIONS ---
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown('<p class="section-header">Shockwave Cone</p>', unsafe_allow_html=True)
-    if mach >= 1.0:
-        half_angle = np.degrees(np.arcsin(1 / mach))
-        theta = np.radians(half_angle)
-
-        phi = np.linspace(0, 2 * np.pi, 60)
-        x_len = np.linspace(0, 8, 40)
-        PHI, X = np.meshgrid(phi, x_len)
-        R = X * np.tan(theta)
-        Y = R * np.cos(PHI)
-        Z = R * np.sin(PHI)
-        X_cone = -X
-
-        intensity = min(1.0, (mach - 1.0) / 1.5)
-
-        fig1 = go.Figure()
-        fig1.add_trace(go.Surface(
-            x=X_cone, y=Y, z=Z,
-            colorscale=[
-                [0, f'rgba(255, 60, 10, {0.3 + 0.4 * intensity})'],
-                [0.5, f'rgba(255, 120, 30, {0.2 + 0.3 * intensity})'],
-                [1, f'rgba(255, 180, 60, {0.1 + 0.15 * intensity})']
-            ],
-            showscale=False, opacity=0.6,
-            name='Mach Cone'
-        ))
-
-        fig1.add_trace(go.Scatter3d(
-            x=[0.3], y=[0], z=[0],
-            mode='markers+text',
-            marker=dict(size=8, color='#00f0ff', symbol='diamond'),
-            text=[f'TEJAS M{mach:.1f}'],
-            textposition='top center',
-            textfont=dict(color='#00f0ff', size=11),
-            name='Aircraft'
-        ))
-
-        fig1.update_layout(
-            title=dict(text=f"3D Mach Cone — Half Angle: {half_angle:.1f}°", font=dict(color='#00f0ff', family='Orbitron')),
-            scene=dict(
-                xaxis=dict(title='X', backgroundcolor='rgb(10,15,28)', gridcolor='rgba(0,240,255,0.1)', color='#5a9fd4'),
-                yaxis=dict(title='Y', backgroundcolor='rgb(10,15,28)', gridcolor='rgba(0,240,255,0.1)', color='#5a9fd4'),
-                zaxis=dict(title='Z', backgroundcolor='rgb(10,15,28)', gridcolor='rgba(0,240,255,0.1)', color='#5a9fd4'),
-                bgcolor='rgb(8,12,22)',
-                aspectmode='data'
-            ),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            height=500,
-            margin=dict(l=0, r=0, t=40, b=0)
-        )
-        st.plotly_chart(fig1, use_container_width=True)
+    if mach < 0.8:
+        regime, regime_class = "SUBSONIC", "regime-subsonic"
+    elif mach < 1.0:
+        regime, regime_class = "TRANSONIC", "regime-transonic"
     else:
-        st.markdown("""
-        <div class="hud-card" style="text-align:center; padding:60px 20px;">
-            <p style="font-family:'Orbitron',monospace; color:#5a9fd4; font-size:1rem; letter-spacing:2px;">
-            NO SHOCKWAVE AT SUBSONIC SPEEDS</p>
-            <p style="font-family:'Rajdhani',sans-serif; color:#3a6f94; font-size:0.9rem;">
-            Increase Mach to 1.0+ to generate the 3D Mach cone</p>
+        regime, regime_class = "SUPERSONIC", "regime-supersonic"
+
+    q = 0.5 * rho * aircraft_speed ** 2
+    if mach < 0.8:
+        cd = TEJAS_DRAG_CD0 + 0.06 * (mach ** 2)
+    elif mach < 1.2:
+        cd = TEJAS_DRAG_CD0 + 0.06 * (mach ** 2) + 0.2 * (mach - 0.8) ** 2
+    else:
+        cd = TEJAS_DRAG_CD0 + 0.06 * (mach ** 2) + 0.015 / (mach ** 2)
+
+    cl = (TEJAS_MASS * 9.81) / (q * TEJAS_WING_AREA) if q > 0 else 0
+    drag = q * TEJAS_WING_AREA * cd
+    lift = q * TEJAS_WING_AREA * cl
+    weight = TEJAS_MASS * 9.81
+    thrust_required = drag
+    g_load = lift / weight if weight > 0 else 0
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown(f'<div style="text-align:center"><span class="{regime_class} regime-badge">{regime}</span></div>', unsafe_allow_html=True)
+    st.sidebar.markdown(f"""
+    <div class="specs-grid">
+      <div class="spec-item"><span class="spec-val">{speed_of_sound:.0f}</span><span class="spec-label">Sound m/s</span></div>
+      <div class="spec-item"><span class="spec-val">{aircraft_speed:.0f}</span><span class="spec-label">Speed m/s</span></div>
+      <div class="spec-item"><span class="spec-val">{aircraft_speed*3.6:.0f}</span><span class="spec-label">km/h</span></div>
+      <div class="spec-item"><span class="spec-val">{rho:.4f}</span><span class="spec-label">Density</span></div>
+      <div class="spec-item"><span class="spec-val">{q:.0f}</span><span class="spec-label">Q (Pa)</span></div>
+      <div class="spec-item"><span class="spec-val">{g_load:.2f}</span><span class="spec-label">G-Load</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown('<p class="section-header">Tejas Mk1A</p>', unsafe_allow_html=True)
+    st.sidebar.markdown(f"""
+    <div class="specs-grid">
+      <div class="spec-item"><span class="spec-val">GE F404</span><span class="spec-label">Engine</span></div>
+      <div class="spec-item"><span class="spec-val">{TEJAS_MAX_THRUST} kN</span><span class="spec-label">Max Thrust</span></div>
+      <div class="spec-item"><span class="spec-val">M {TEJAS_MAX_MACH}</span><span class="spec-label">Max Speed</span></div>
+      <div class="spec-item"><span class="spec-val">{TEJAS_CEILING/1000:.1f} km</span><span class="spec-label">Ceiling</span></div>
+      <div class="spec-item"><span class="spec-val">{TEJAS_WING_AREA} m²</span><span class="spec-label">Wing Area</span></div>
+      <div class="spec-item"><span class="spec-val">{TEJAS_MASS/1000:.1f} t</span><span class="spec-label">Weight</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Metrics bar
+    st.markdown(f"""
+    <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+      <div class="hud-metric"><span class="value">{mach:.2f}</span><span class="label">Mach</span></div>
+      <div class="hud-metric"><span class="value">{altitude/1000:.1f} km</span><span class="label">Altitude</span></div>
+      <div class="hud-metric"><span class="value">{temp - 273.15:.0f}°C</span><span class="label">OAT</span></div>
+      <div class="hud-metric"><span class="value">{aircraft_speed:.0f}</span><span class="label">m/s</span></div>
+      <div class="hud-metric"><span class="value">{aircraft_speed*3.6:.0f}</span><span class="label">km/h</span></div>
+      <div class="hud-metric"><span class="value">{g_load:.1f}G</span><span class="label">G-Load</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Alerts
+    if mach >= 1.0:
+        ha = np.degrees(np.arcsin(1 / mach))
+        bs = 0.5 + 1.5 * (mach - 1.0)
+        st.markdown(f'<div class="alert-box alert-boom">⚡ SONIC BOOM — Half-angle: {ha:.1f}° | Overpressure: {bs:.2f}</div>', unsafe_allow_html=True)
+    elif mach >= 0.8:
+        st.markdown('<div class="alert-box alert-transonic">⚠ TRANSONIC — Wave drag rising</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="alert-box alert-normal">✓ SUBSONIC — Normal conditions</div>', unsafe_allow_html=True)
+    if mach > TEJAS_MAX_MACH:
+        st.markdown(f'<div class="alert-box alert-limit">⛔ BEYOND MAX Mach {TEJAS_MAX_MACH}</div>', unsafe_allow_html=True)
+    if altitude > TEJAS_CEILING:
+        st.markdown(f'<div class="alert-box alert-limit">⛔ ABOVE CEILING {TEJAS_CEILING/1000:.1f} km</div>', unsafe_allow_html=True)
+
+    # Shockwave + Pressure
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('<p class="section-header">Shockwave Cone</p>', unsafe_allow_html=True)
+        if mach >= 1.0:
+            half_angle = np.degrees(np.arcsin(1 / mach))
+            theta = np.radians(half_angle)
+            phi = np.linspace(0, 2 * np.pi, 60)
+            x_len = np.linspace(0, 8, 40)
+            PHI, X = np.meshgrid(phi, x_len)
+            R = X * np.tan(theta)
+            Y, Z = R * np.cos(PHI), R * np.sin(PHI)
+            intensity = min(1.0, (mach - 1.0) / 1.5)
+            fig1 = go.Figure()
+            fig1.add_trace(go.Surface(x=-X, y=Y, z=Z,
+                colorscale=[[0, f'rgba(255,60,10,{0.3+0.4*intensity})'], [0.5, f'rgba(255,120,30,{0.2+0.3*intensity})'], [1, f'rgba(255,180,60,{0.1+0.15*intensity})']],
+                showscale=False, opacity=0.6))
+            fig1.add_trace(go.Scatter3d(x=[0.3], y=[0], z=[0], mode='markers+text',
+                marker=dict(size=8, color='#00f0ff', symbol='diamond'),
+                text=[f'TEJAS M{mach:.1f}'], textposition='top center', textfont=dict(color='#00f0ff', size=11)))
+            fig1.update_layout(
+                title=dict(text=f"3D Mach Cone — {half_angle:.1f}°", font=dict(color='#00f0ff', family='Orbitron')),
+                scene=dict(
+                    xaxis=dict(backgroundcolor='rgb(10,15,28)', gridcolor='rgba(0,240,255,0.1)', color='#5a9fd4'),
+                    yaxis=dict(backgroundcolor='rgb(10,15,28)', gridcolor='rgba(0,240,255,0.1)', color='#5a9fd4'),
+                    zaxis=dict(backgroundcolor='rgb(10,15,28)', gridcolor='rgba(0,240,255,0.1)', color='#5a9fd4'),
+                    bgcolor='rgb(8,12,22)', aspectmode='data'),
+                paper_bgcolor='rgba(0,0,0,0)', height=500, margin=dict(l=0, r=0, t=40, b=0))
+            st.plotly_chart(fig1, use_container_width=True)
+        else:
+            st.markdown('<div class="hud-card" style="text-align:center;padding:60px 20px;"><p style="font-family:Orbitron,monospace;color:#5a9fd4;letter-spacing:2px;">NO SHOCKWAVE — Increase Mach to 1.0+</p></div>', unsafe_allow_html=True)
+
+    with col2:
+        st.markdown('<p class="section-header">Pressure N-Wave</p>', unsafe_allow_html=True)
+        x_wave = np.linspace(-10, 10, 1000)
+        if mach >= 1.0:
+            boom_strength = 0.5 + 1.5 * (mach - 1.0)
+            sw, nwl = 0.3, 3.0 + 2.0 / mach
+            fs = boom_strength * (1 / (1 + np.exp(-x_wave / (sw * 0.3))))
+            rs = boom_strength * (1 / (1 + np.exp(-(x_wave - nwl) / (sw * 0.3))))
+            ld = np.clip(boom_strength * (1 - x_wave / nwl), -boom_strength, boom_strength)
+            mask = (x_wave >= -sw * 3) & (x_wave <= nwl + sw * 3)
+            pw = np.ones_like(x_wave)
+            pw[mask] = 1.0 + (fs[mask] - rs[mask]) * ld[mask] / boom_strength
+            op = boom_strength * (rho / 1.225) ** 0.5
+            tt = f"Sonic Boom N-Wave | ΔP ≈ {op:.2f}"
+        else:
+            cf = 1 / np.sqrt(max(1 - mach ** 2, 0.01))
+            pw = 1.0 + 0.3 * cf * np.exp(-0.5 * (x_wave * (1 - mach)) ** 2) * np.cos(3 * x_wave)
+            tt = f"Subsonic Pressure | β = {1/cf:.3f}"
+        lc = '#ff4444' if mach >= 1.0 else '#00f0ff'
+        fig2 = go.Figure()
+        fig2.add_trace(go.Scatter(x=x_wave, y=pw, mode='lines', line=dict(color=lc, width=2.5), name='Pressure'))
+        fig2.add_hline(y=1.0, line_dash="dash", line_color="rgba(100,150,200,0.4)", annotation_text="P∞", annotation_font=dict(color='#5a9fd4'))
+        fig2.update_layout(title=dict(text=tt, font=dict(color='#00f0ff', family='Orbitron', size=13)), xaxis_title="Position", yaxis_title="P / P∞")
+        plotly_hud_layout(fig2, height=500)
+        st.plotly_chart(fig2, use_container_width=True)
+
+    # Forces + Envelope
+    st.markdown("---")
+    cf1, cf2 = st.columns(2)
+    with cf1:
+        st.markdown('<p class="section-header">Four Forces of Flight</p>', unsafe_allow_html=True)
+        fnames = ['LIFT ↑', 'WEIGHT ↓', 'THRUST →', 'DRAG ←']
+        fvals = [lift/1000, weight/1000, thrust_required/1000, drag/1000]
+        fcols = ['#00e878', '#ff5050', '#00b4ff', '#ffc800']
+        fig3 = go.Figure()
+        fig3.add_trace(go.Bar(y=fnames, x=fvals, orientation='h',
+            marker=dict(color=fcols), text=[f'{v:.1f} kN' for v in fvals],
+            textposition='outside', textfont=dict(color='#c0d8ef', size=14, family='Orbitron'),
+            hovertemplate='%{y}: %{x:.2f} kN<extra></extra>'))
+        bal = "BALANCED" if abs(lift - weight) < weight * 0.01 else "UNBALANCED"
+        fig3.add_annotation(x=max(fvals)*0.5, y=1.5, text=f"<b>L/W: {bal}</b>",
+            font=dict(size=12, color='#00e878' if bal == "BALANCED" else '#ff5050', family='Orbitron'), showarrow=False)
+        plotly_hud_layout(fig3, showlegend=False)
+        fig3.update_layout(yaxis=dict(color='#c0d8ef', tickfont=dict(size=14, family='Rajdhani')),
+                           xaxis=dict(title="Force (kN)"), margin=dict(l=100, r=60, t=20, b=40))
+        st.plotly_chart(fig3, use_container_width=True)
+
+    with cf2:
+        st.markdown('<p class="section-header">Performance Envelope</p>', unsafe_allow_html=True)
+        alts = np.linspace(0, 20000, 200)
+        me = []
+        for a in alts:
+            t, p, r, spd = isa_atmosphere(a)
+            vl = np.sqrt(2 * 80000 / r)
+            ml = min(vl / spd, TEJAS_MAX_MACH)
+            if a > TEJAS_CEILING:
+                ml = max(0, ml * (1 - (a - TEJAS_CEILING) / 5000))
+            me.append(ml)
+        fig4 = go.Figure()
+        fig4.add_trace(go.Scatter(x=me, y=alts/1000, mode='lines', fill='tozerox',
+            line=dict(color='#ff6b35', width=2), fillcolor='rgba(255,107,53,0.1)', name='Envelope'))
+        fig4.add_trace(go.Scatter(x=[mach], y=[altitude/1000], mode='markers+text',
+            marker=dict(size=14, color='#00f0ff', symbol='star-diamond'),
+            text=[f'M{mach:.1f}'], textposition='top right', textfont=dict(color='#00f0ff', size=12, family='Orbitron'), name='Current'))
+        fig4.add_vline(x=1.0, line_dash="dot", line_color="rgba(255,255,0,0.4)", annotation_text="Mach 1")
+        plotly_hud_layout(fig4)
+        fig4.update_layout(xaxis=dict(title="Mach"), yaxis=dict(title="Altitude (km)"))
+        st.plotly_chart(fig4, use_container_width=True)
+
+    # Drag + Atmosphere
+    st.markdown("---")
+    cd1, cd2 = st.columns(2)
+    with cd1:
+        st.markdown('<p class="section-header">Drag vs Mach</p>', unsafe_allow_html=True)
+        mr = np.linspace(0.1, 3.0, 300)
+        cdc = []
+        for m in mr:
+            if m < 0.8: c = TEJAS_DRAG_CD0 + 0.06*(m**2)
+            elif m < 1.2: c = TEJAS_DRAG_CD0 + 0.06*(m**2) + 0.2*(m-0.8)**2
+            else: c = TEJAS_DRAG_CD0 + 0.06*(m**2) + 0.015/(m**2)
+            cdc.append(c)
+        fig5 = go.Figure()
+        fig5.add_vrect(x0=0.1, x1=0.8, fillcolor="rgba(0,200,100,0.05)", line_width=0, annotation_text="Sub", annotation_position="top left", annotation_font=dict(color='rgba(0,200,100,0.5)', size=9))
+        fig5.add_vrect(x0=0.8, x1=1.2, fillcolor="rgba(255,165,0,0.05)", line_width=0, annotation_text="Trans", annotation_position="top left", annotation_font=dict(color='rgba(255,165,0,0.5)', size=9))
+        fig5.add_vrect(x0=1.2, x1=3.0, fillcolor="rgba(255,50,50,0.05)", line_width=0, annotation_text="Super", annotation_position="top left", annotation_font=dict(color='rgba(255,50,50,0.5)', size=9))
+        fig5.add_trace(go.Scatter(x=mr, y=cdc, mode='lines', line=dict(color='#ff6b35', width=2.5), name='CD'))
+        fig5.add_trace(go.Scatter(x=[mach], y=[cd], mode='markers', marker=dict(size=12, color='#00f0ff'), name=f'CD={cd:.4f}'))
+        plotly_hud_layout(fig5, height=400)
+        fig5.update_layout(xaxis=dict(title="Mach"), yaxis=dict(title="CD"))
+        st.plotly_chart(fig5, use_container_width=True)
+
+    with cd2:
+        st.markdown('<p class="section-header">ISA Atmosphere</p>', unsafe_allow_html=True)
+        ap = np.linspace(0, 20000, 200)
+        tp = [isa_atmosphere(a)[0] - 273.15 for a in ap]
+        fig6 = go.Figure()
+        fig6.add_trace(go.Scatter(x=tp, y=ap/1000, mode='lines', line=dict(color='#ff6b35', width=2), name='Temp (°C)'))
+        fig6.add_trace(go.Scatter(x=[temp-273.15], y=[altitude/1000], mode='markers', marker=dict(size=10, color='#00f0ff', symbol='star'), name='Current'))
+        fig6.add_hline(y=11, line_dash="dot", line_color="rgba(255,255,0,0.3)", annotation_text="Tropopause", annotation_font=dict(color='yellow', size=9))
+        plotly_hud_layout(fig6, height=400)
+        fig6.update_layout(xaxis=dict(title="Temperature (°C)"), yaxis=dict(title="Altitude (km)"))
+        st.plotly_chart(fig6, use_container_width=True)
+
+    # Sonic boom footprint
+    if mach >= 1.0:
+        st.markdown("---")
+        st.markdown('<p class="section-header">Sonic Boom Ground Footprint</p>', unsafe_allow_html=True)
+        ha2 = np.degrees(np.arcsin(1 / mach))
+        bw = altitude * np.tan(np.radians(ha2)) * 2 / 1000
+        gx = np.linspace(-bw/2, bw/2, 200)
+        gi = np.exp(-2 * (gx / (bw/2))**2)
+        bstr = 0.5 + 1.5 * (mach - 1.0)
+        opg = bstr * gi * (1.225 / rho)**0.5
+        fig7 = go.Figure()
+        fig7.add_trace(go.Scatter(x=gx, y=opg, mode='lines', fill='tozeroy', line=dict(color='#ff4444', width=2), fillcolor='rgba(255,50,50,0.15)'))
+        fig7.add_annotation(x=0, y=max(opg), text=f"Peak ΔP ≈ {max(opg):.2f}<br>Width ≈ {bw:.1f} km",
+            font=dict(color='#ff6b6b', size=12, family='Rajdhani'), showarrow=True, arrowcolor='#ff4444')
+        plotly_hud_layout(fig7, height=350)
+        fig7.update_layout(xaxis=dict(title="Lateral Distance (km)"), yaxis=dict(title="Overpressure"))
+        st.plotly_chart(fig7, use_container_width=True)
+
+
+# ============================================================
+# TAB 2: ISRO LAUNCH SIMULATOR
+# ============================================================
+with tab_isro:
+    st.markdown('<p class="section-header">ISRO Launch Vehicle Simulator</p>', unsafe_allow_html=True)
+    st.markdown('<div class="alert-box alert-info">Simulate PSLV and GSLV launch trajectories with real stage parameters</div>', unsafe_allow_html=True)
+
+    rockets = {
+        "PSLV-XL": {
+            "stages": [
+                {"name": "PS1 + 6 Strap-ons", "thrust": 4846, "burn_time": 105, "mass_full": 295000, "mass_empty": 30000, "isp": 269},
+                {"name": "PS2 (Vikas)", "thrust": 799, "burn_time": 158, "mass_full": 42000, "mass_empty": 5000, "isp": 293},
+                {"name": "PS3 (Solid)", "thrust": 246, "burn_time": 112, "mass_full": 7600, "mass_empty": 1000, "isp": 294},
+                {"name": "PS4 (Twin Engine)", "thrust": 15.2, "burn_time": 525, "mass_full": 2500, "mass_empty": 920, "isp": 318},
+            ],
+            "payload_leo": 1750,
+            "payload_sso": 1050,
+            "total_mass": 320000,
+            "height": 44.4,
+            "missions": 60,
+        },
+        "GSLV Mk III (LVM3)": {
+            "stages": [
+                {"name": "S200 Boosters (x2)", "thrust": 5150, "burn_time": 130, "mass_full": 400000, "mass_empty": 62000, "isp": 274},
+                {"name": "L110 (Vikas x2)", "thrust": 1598, "burn_time": 200, "mass_full": 116000, "mass_empty": 6700, "isp": 293},
+                {"name": "C25 (CE-20 Cryo)", "thrust": 186, "burn_time": 584, "mass_full": 28000, "mass_empty": 3400, "isp": 443},
+            ],
+            "payload_leo": 10000,
+            "payload_gto": 4000,
+            "total_mass": 640000,
+            "height": 43.4,
+            "missions": 8,
+        },
+    }
+
+    rcol1, rcol2 = st.columns([1, 2])
+    with rcol1:
+        selected_rocket = st.selectbox("Select Launch Vehicle", list(rockets.keys()))
+        rocket = rockets[selected_rocket]
+
+        st.markdown(f"""
+        <div class="hud-card">
+            <div class="specs-grid">
+              <div class="spec-item"><span class="spec-val">{rocket['total_mass']/1000:.0f} t</span><span class="spec-label">Liftoff Mass</span></div>
+              <div class="spec-item"><span class="spec-val">{rocket['height']} m</span><span class="spec-label">Height</span></div>
+              <div class="spec-item"><span class="spec-val">{rocket.get('payload_leo', rocket.get('payload_sso', 0))} kg</span><span class="spec-label">Payload</span></div>
+              <div class="spec-item"><span class="spec-val">{rocket['missions']}</span><span class="spec-label">Missions</span></div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-with col2:
-    st.markdown('<p class="section-header">Pressure Wave — N-Wave</p>', unsafe_allow_html=True)
-    x_wave = np.linspace(-10, 10, 1000)
+        st.markdown("**Stage Details:**")
+        for i, stage in enumerate(rocket["stages"]):
+            st.markdown(f"""
+            <div style="background:rgba(0,240,255,0.03); border:1px solid rgba(0,240,255,0.1); border-radius:6px; padding:8px; margin:4px 0;">
+                <span style="font-family:Orbitron,monospace; color:#00f0ff; font-size:0.8rem;">STAGE {i+1}</span><br>
+                <span style="font-family:Rajdhani,sans-serif; color:#8ab4d4; font-size:0.9rem;">{stage['name']}</span><br>
+                <span style="color:#5a9fd4; font-size:0.8rem;">Thrust: {stage['thrust']} kN | Burn: {stage['burn_time']}s | Isp: {stage['isp']}s</span>
+            </div>
+            """, unsafe_allow_html=True)
 
-    if mach >= 1.0:
-        boom_strength = 0.5 + 1.5 * (mach - 1.0)
-        shock_width = 0.3
-        n_wave_length = 3.0 + 2.0 / mach
+    with rcol2:
+        dt = 0.5
+        t_sim, alt_sim, vel_sim, acc_sim, mach_sim = [0], [0], [0], [0], [0]
+        current_mass = rocket["total_mass"]
+        v, h = 0.0, 0.0
+        stage_boundaries = []
 
-        front_shock = boom_strength * (1 / (1 + np.exp(-x_wave / (shock_width * 0.3))))
-        rear_shock = boom_strength * (1 / (1 + np.exp(-(x_wave - n_wave_length) / (shock_width * 0.3))))
-        linear_drop = boom_strength * (1 - (x_wave / n_wave_length))
-        linear_drop = np.clip(linear_drop, -boom_strength, boom_strength)
+        for si, stage in enumerate(rocket["stages"]):
+            fuel_mass = stage["mass_full"] - stage["mass_empty"]
+            mdot = fuel_mass / stage["burn_time"]
+            stage_mass = current_mass
 
-        mask = (x_wave >= -shock_width * 3) & (x_wave <= n_wave_length + shock_width * 3)
-        pressure_wave = np.ones_like(x_wave)
-        pressure_wave[mask] = 1.0 + (front_shock[mask] - rear_shock[mask]) * linear_drop[mask] / boom_strength
+            for step in range(int(stage["burn_time"] / dt)):
+                t = t_sim[-1] + dt
+                t_atm, p_atm, rho_atm, a_atm = isa_atmosphere(min(h, 20000))
+                g = 9.81 * (6371000 / (6371000 + h)) ** 2
 
-        overpressure = boom_strength * (rho / 1.225) ** 0.5
-        title_text = f"Sonic Boom N-Wave | ΔP ≈ {overpressure:.2f}"
-    else:
-        comp_factor = 1 / np.sqrt(max(1 - mach ** 2, 0.01))
-        pressure_wave = 1.0 + 0.3 * comp_factor * np.exp(-0.5 * (x_wave * (1 - mach)) ** 2) * np.cos(3 * x_wave)
-        title_text = f"Subsonic Pressure Field | β = {1/comp_factor:.3f}"
+                thrust = stage["thrust"] * 1000
+                drag_f = 0.5 * rho_atm * v ** 2 * 0.3 * (3.14 * 1.5 ** 2) if h < 80000 else 0
+                acc = (thrust - drag_f) / current_mass - g
+                v = max(0, v + acc * dt)
+                h = h + v * dt
+                current_mass -= mdot * dt
 
-    fig2 = go.Figure()
+                t_sim.append(t)
+                alt_sim.append(h / 1000)
+                vel_sim.append(v)
+                acc_sim.append(acc / 9.81)
+                mach_sim.append(v / a_atm if h < 20000 else v / 295.0)
 
-    color_above = 'rgba(255,80,50,0.3)' if mach >= 1.0 else 'rgba(0,180,255,0.15)'
-    color_below = 'rgba(0,150,255,0.3)' if mach >= 1.0 else 'rgba(0,180,255,0.15)'
-    line_color = '#ff4444' if mach >= 1.0 else '#00f0ff'
+            current_mass -= stage["mass_empty"]
+            current_mass = max(current_mass, 500)
+            stage_boundaries.append((t_sim[-1], alt_sim[-1], stage["name"]))
 
-    fig2.add_trace(go.Scatter(
-        x=x_wave, y=np.where(pressure_wave >= 1.0, pressure_wave, 1.0),
-        mode='lines', line=dict(width=0), showlegend=False
-    ))
-    fig2.add_trace(go.Scatter(
-        x=x_wave, y=np.ones_like(x_wave),
-        mode='lines', line=dict(width=0), fill='tonexty',
-        fillcolor=color_above, showlegend=False
-    ))
+        # Trajectory plot
+        fig_traj = go.Figure()
+        fig_traj.add_trace(go.Scatter(x=t_sim, y=alt_sim, mode='lines',
+            line=dict(color='#ff6b35', width=3), name='Altitude'))
+        for tb, ab, sn in stage_boundaries:
+            fig_traj.add_vline(x=tb, line_dash="dot", line_color="rgba(0,240,255,0.3)")
+            fig_traj.add_annotation(x=tb, y=ab, text=f"⬤ {sn.split('(')[0].strip()} sep",
+                font=dict(color='#00f0ff', size=9, family='Rajdhani'), showarrow=True,
+                arrowcolor='#00f0ff', arrowsize=0.8)
+        fig_traj.update_layout(title=dict(text=f"{selected_rocket} Launch Trajectory", font=dict(color='#00f0ff', family='Orbitron', size=14)),
+            xaxis_title="Time (s)", yaxis_title="Altitude (km)")
+        plotly_hud_layout(fig_traj, height=400)
+        st.plotly_chart(fig_traj, use_container_width=True)
 
-    fig2.add_trace(go.Scatter(
-        x=x_wave, y=pressure_wave, mode='lines',
-        line=dict(color=line_color, width=2.5),
-        name='Pressure'
-    ))
-    fig2.add_hline(y=1.0, line_dash="dash", line_color="rgba(100,150,200,0.4)",
-                   annotation_text="P∞", annotation_font=dict(color='#5a9fd4'))
+        # Velocity + Mach + G-force
+        vc1, vc2 = st.columns(2)
+        with vc1:
+            fig_vel = go.Figure()
+            fig_vel.add_trace(go.Scatter(x=t_sim, y=vel_sim, mode='lines', line=dict(color='#00e878', width=2), name='Velocity (m/s)'))
+            fig_vel.update_layout(title=dict(text="Velocity Profile", font=dict(color='#00f0ff', family='Orbitron', size=12)),
+                xaxis_title="Time (s)", yaxis_title="Velocity (m/s)")
+            plotly_hud_layout(fig_vel, height=350)
+            st.plotly_chart(fig_vel, use_container_width=True)
 
-    fig2.update_layout(
-        title=dict(text=title_text, font=dict(color='#00f0ff', family='Orbitron', size=13)),
-        xaxis_title="Position",
-        yaxis_title="P / P∞",
-        template="plotly_dark",
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(8,12,22,0.9)',
-        height=500,
-        xaxis=dict(gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
-        yaxis=dict(gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
-        margin=dict(l=50, r=20, t=50, b=40)
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+        with vc2:
+            fig_g = go.Figure()
+            fig_g.add_trace(go.Scatter(x=t_sim, y=acc_sim, mode='lines', line=dict(color='#ffc800', width=2), name='G-force'))
+            fig_g.add_hline(y=6, line_dash="dash", line_color="rgba(255,50,50,0.4)", annotation_text="Human limit ~6G", annotation_font=dict(color='#ff5050', size=9))
+            fig_g.update_layout(title=dict(text="G-Force Profile", font=dict(color='#00f0ff', family='Orbitron', size=12)),
+                xaxis_title="Time (s)", yaxis_title="G-force")
+            plotly_hud_layout(fig_g, height=350)
+            st.plotly_chart(fig_g, use_container_width=True)
 
-# --- FORCES & ENVELOPE ---
-st.markdown("---")
-col_f1, col_f2 = st.columns(2)
+    # Key mission stats
+    st.markdown(f"""
+    <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+      <div class="hud-metric"><span class="value">{max(alt_sim):.0f} km</span><span class="label">Max Alt</span></div>
+      <div class="hud-metric"><span class="value">{max(vel_sim):.0f} m/s</span><span class="label">Max Vel</span></div>
+      <div class="hud-metric"><span class="value">{max(vel_sim)/1000*3.6:.0f} km/h</span><span class="label">Max Speed</span></div>
+      <div class="hud-metric"><span class="value">{max(mach_sim):.1f}</span><span class="label">Max Mach</span></div>
+      <div class="hud-metric"><span class="value">{max(acc_sim):.1f}G</span><span class="label">Peak G</span></div>
+      <div class="hud-metric"><span class="value">{t_sim[-1]:.0f}s</span><span class="label">Burn Time</span></div>
+    </div>
+    """, unsafe_allow_html=True)
 
-with col_f1:
-    st.markdown('<p class="section-header">Four Forces of Flight</p>', unsafe_allow_html=True)
 
-    force_names = ['LIFT ↑', 'WEIGHT ↓', 'THRUST →', 'DRAG ←']
-    force_vals = [lift / 1000, weight / 1000, thrust_required / 1000, drag / 1000]
-    force_colors_list = ['#00e878', '#ff5050', '#00b4ff', '#ffc800']
+# ============================================================
+# TAB 3: BRAHMOS
+# ============================================================
+with tab_brahmos:
+    st.markdown('<p class="section-header">BrahMos Supersonic Cruise Missile</p>', unsafe_allow_html=True)
+    st.markdown('<div class="alert-box alert-info">Simulate BrahMos flight trajectory — the world\'s fastest cruise missile in service</div>', unsafe_allow_html=True)
 
-    fig3 = go.Figure()
-    fig3.add_trace(go.Bar(
-        y=force_names, x=force_vals, orientation='h',
-        marker=dict(color=force_colors_list,
-                    line=dict(width=1, color='rgba(255,255,255,0.1)')),
-        text=[f'{v:.1f} kN' for v in force_vals],
-        textposition='outside',
-        textfont=dict(color='#c0d8ef', size=14, family='Orbitron'),
-        hovertemplate='%{y}: %{x:.2f} kN<extra></extra>'
-    ))
+    bcol1, bcol2 = st.columns([1, 2])
+    with bcol1:
+        brahmos_variant = st.selectbox("Variant", ["BrahMos Block III", "BrahMos-II (Hypersonic)", "BrahMos-ER"])
+        target_range = st.slider("Target Range (km)", 50, 800, 290)
 
-    balance_text = "BALANCED" if abs(lift - weight) < weight * 0.01 else "UNBALANCED"
-    balance_color = "#00e878" if balance_text == "BALANCED" else "#ff5050"
+        specs = {
+            "BrahMos Block III": {"speed_mach": 2.8, "range": 450, "weight": 3000, "warhead": 200, "altitude_cruise": 15000, "altitude_sea_skim": 10, "engine": "Ramjet"},
+            "BrahMos-II (Hypersonic)": {"speed_mach": 7.0, "range": 600, "weight": 3500, "warhead": 200, "altitude_cruise": 40000, "altitude_sea_skim": 15, "engine": "Scramjet"},
+            "BrahMos-ER": {"speed_mach": 2.8, "range": 800, "weight": 2800, "warhead": 200, "altitude_cruise": 15000, "altitude_sea_skim": 10, "engine": "Ramjet"},
+        }
+        sp = specs[brahmos_variant]
 
-    fig3.add_annotation(
-        x=max(force_vals) * 0.5, y=1.5,
-        text=f"<b>L/W: {balance_text}</b>",
-        font=dict(size=12, color=balance_color, family='Orbitron'),
-        showarrow=False
-    )
+        st.markdown(f"""
+        <div class="hud-card">
+            <div class="specs-grid">
+              <div class="spec-item"><span class="spec-val">M {sp['speed_mach']}</span><span class="spec-label">Speed</span></div>
+              <div class="spec-item"><span class="spec-val">{sp['range']} km</span><span class="spec-label">Range</span></div>
+              <div class="spec-item"><span class="spec-val">{sp['weight']} kg</span><span class="spec-label">Weight</span></div>
+              <div class="spec-item"><span class="spec-val">{sp['warhead']} kg</span><span class="spec-label">Warhead</span></div>
+              <div class="spec-item"><span class="spec-val">{sp['engine']}</span><span class="spec-label">Engine</span></div>
+              <div class="spec-item"><span class="spec-val">{sp['altitude_sea_skim']} m</span><span class="spec-label">Sea Skim</span></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    fig3.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(8,12,22,0.9)',
-        xaxis=dict(title="Force (kN)", gridcolor='rgba(0,240,255,0.08)',
-                   color='#5a9fd4', zeroline=True, zerolinecolor='rgba(0,240,255,0.15)'),
-        yaxis=dict(color='#c0d8ef', tickfont=dict(size=14, family='Rajdhani')),
-        height=450, showlegend=False,
-        margin=dict(l=100, r=60, t=20, b=40)
-    )
-    st.plotly_chart(fig3, use_container_width=True)
+    with bcol2:
+        cruise_alt = sp["altitude_cruise"]
+        sea_skim_alt = sp["altitude_sea_skim"]
+        cruise_speed = sp["speed_mach"] * 340
 
-with col_f2:
-    st.markdown('<p class="section-header">Performance Envelope</p>', unsafe_allow_html=True)
+        climb_dist = min(target_range * 0.15, 40)
+        dive_dist = min(target_range * 0.1, 30)
+        cruise_dist = target_range - climb_dist - dive_dist
 
-    altitudes_env = np.linspace(0, 20000, 200)
-    mach_envelope = []
-    for alt in altitudes_env:
-        if alt <= 11000:
-            t = 288.15 - 0.0065 * alt
-            p = 101325 * (t / 288.15) ** 5.2561
-        else:
-            t = 216.65
-            p = 22632 * np.exp(-0.00015769 * (alt - 11000))
-        r = p / (287.05 * t)
-        q_limit = 80000
-        a = np.sqrt(1.4 * 287.05 * t)
-        v_limit = np.sqrt(2 * q_limit / r)
-        m_limit = min(v_limit / a, TEJAS_MAX_MACH)
-        if alt > TEJAS_CEILING:
-            m_limit = max(0, m_limit * (1 - (alt - TEJAS_CEILING) / 5000))
-        mach_envelope.append(m_limit)
+        n_pts = 500
+        x_flight = np.linspace(0, target_range, n_pts)
+        alt_flight = np.zeros(n_pts)
 
-    fig4 = go.Figure()
-    fig4.add_trace(go.Scatter(
-        x=mach_envelope, y=altitudes_env / 1000,
-        mode='lines', fill='tozerox',
-        line=dict(color='#ff6b35', width=2),
-        fillcolor='rgba(255,107,53,0.1)',
-        name='Envelope'
-    ))
-    fig4.add_trace(go.Scatter(
-        x=[mach], y=[altitude / 1000],
-        mode='markers+text',
-        marker=dict(size=14, color='#00f0ff', symbol='star-diamond',
-                    line=dict(width=2, color='rgba(0,240,255,0.5)')),
-        text=[f'M{mach:.1f}'], textposition='top right',
-        textfont=dict(color='#00f0ff', size=12, family='Orbitron'),
-        name='Current'
-    ))
-    fig4.add_vline(x=1.0, line_dash="dot", line_color="rgba(255,255,0,0.4)",
-                   annotation_text="Mach 1", annotation_font=dict(color='yellow', size=10))
+        for i, x in enumerate(x_flight):
+            if x < climb_dist:
+                frac = x / climb_dist
+                alt_flight[i] = cruise_alt * (1 - np.cos(frac * np.pi / 2))
+            elif x < climb_dist + cruise_dist:
+                alt_flight[i] = cruise_alt
+            else:
+                frac = (x - climb_dist - cruise_dist) / dive_dist
+                alt_flight[i] = cruise_alt * (1 - frac) ** 2
+                if frac > 0.7:
+                    alt_flight[i] = max(alt_flight[i], sea_skim_alt)
 
-    fig4.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(8,12,22,0.9)',
-        xaxis=dict(title="Mach", gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
-        yaxis=dict(title="Altitude (km)", gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
-        height=450,
-        margin=dict(l=50, r=20, t=20, b=40)
-    )
-    st.plotly_chart(fig4, use_container_width=True)
+        time_flight = x_flight * 1000 / cruise_speed
 
-# --- DRAG CURVE & ATMOSPHERE ---
-st.markdown("---")
-col_d1, col_d2 = st.columns(2)
+        fig_bm = go.Figure()
+        fig_bm.add_trace(go.Scatter(x=x_flight, y=alt_flight/1000, mode='lines', fill='tozeroy',
+            line=dict(color='#ff3232', width=3), fillcolor='rgba(255,50,50,0.1)', name='Trajectory'))
+        fig_bm.add_trace(go.Scatter(x=[0], y=[0], mode='markers+text',
+            marker=dict(size=12, color='#00e878', symbol='triangle-up'),
+            text=['LAUNCH'], textposition='top right', textfont=dict(color='#00e878', size=10, family='Orbitron'), showlegend=False))
+        fig_bm.add_trace(go.Scatter(x=[target_range], y=[0], mode='markers+text',
+            marker=dict(size=14, color='#ff3232', symbol='x'),
+            text=['TARGET'], textposition='top left', textfont=dict(color='#ff3232', size=10, family='Orbitron'), showlegend=False))
 
-with col_d1:
-    st.markdown('<p class="section-header">Drag Coefficient vs Mach</p>', unsafe_allow_html=True)
-    mach_range = np.linspace(0.1, 3.0, 300)
-    cd_curve = []
-    for m in mach_range:
-        if m < 0.8:
-            c = TEJAS_DRAG_CD0 + 0.06 * (m ** 2)
-        elif m < 1.2:
-            c = TEJAS_DRAG_CD0 + 0.06 * (m ** 2) + 0.2 * (m - 0.8) ** 2
-        else:
-            c = TEJAS_DRAG_CD0 + 0.06 * (m ** 2) + 0.015 / (m ** 2)
-        cd_curve.append(c)
+        fig_bm.add_annotation(x=climb_dist + cruise_dist * 0.5, y=cruise_alt/1000 + 1,
+            text=f"CRUISE: Mach {sp['speed_mach']} @ {cruise_alt/1000:.0f} km",
+            font=dict(color='#ffc800', size=11, family='Rajdhani'), showarrow=False)
 
-    fig5 = go.Figure()
+        fig_bm.update_layout(title=dict(text=f"{brahmos_variant} Flight Profile", font=dict(color='#ff3232', family='Orbitron', size=14)),
+            xaxis_title="Range (km)", yaxis_title="Altitude (km)")
+        plotly_hud_layout(fig_bm, height=450)
+        st.plotly_chart(fig_bm, use_container_width=True)
 
-    fig5.add_vrect(x0=0.1, x1=0.8, fillcolor="rgba(0,200,100,0.05)", line_width=0,
-                   annotation_text="Subsonic", annotation_position="top left",
-                   annotation_font=dict(color='rgba(0,200,100,0.5)', size=10))
-    fig5.add_vrect(x0=0.8, x1=1.2, fillcolor="rgba(255,165,0,0.05)", line_width=0,
-                   annotation_text="Transonic", annotation_position="top left",
-                   annotation_font=dict(color='rgba(255,165,0,0.5)', size=10))
-    fig5.add_vrect(x0=1.2, x1=3.0, fillcolor="rgba(255,50,50,0.05)", line_width=0,
-                   annotation_text="Supersonic", annotation_position="top left",
-                   annotation_font=dict(color='rgba(255,50,50,0.5)', size=10))
+    st.markdown(f"""
+    <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+      <div class="hud-metric"><span class="value">Mach {sp['speed_mach']}</span><span class="label">Speed</span></div>
+      <div class="hud-metric"><span class="value">{cruise_speed:.0f} m/s</span><span class="label">Velocity</span></div>
+      <div class="hud-metric"><span class="value">{cruise_speed*3.6:.0f}</span><span class="label">km/h</span></div>
+      <div class="hud-metric"><span class="value">{time_flight[-1]:.0f}s</span><span class="label">Flight Time</span></div>
+      <div class="hud-metric"><span class="value">{target_range} km</span><span class="label">Range</span></div>
+      <div class="hud-metric"><span class="value">{sp['warhead']} kg</span><span class="label">Warhead</span></div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    fig5.add_trace(go.Scatter(
-        x=mach_range, y=cd_curve, mode='lines',
-        line=dict(color='#ff6b35', width=2.5),
-        name='CD'
-    ))
-    fig5.add_trace(go.Scatter(
-        x=[mach], y=[cd], mode='markers',
-        marker=dict(size=12, color='#00f0ff', symbol='circle',
-                    line=dict(width=2, color='rgba(0,240,255,0.5)')),
-        name=f'Current CD={cd:.4f}'
-    ))
+    st.markdown(f"""
+    <div class="alert-box alert-boom">
+    ⚡ BrahMos travels at {cruise_speed*3.6:.0f} km/h — a target at {target_range} km would be hit in just {time_flight[-1]:.0f} seconds.
+    At this speed, the missile covers 1 km every {1000/cruise_speed:.1f} seconds.
+    </div>
+    """, unsafe_allow_html=True)
 
-    fig5.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(8,12,22,0.9)',
-        xaxis=dict(title="Mach", gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
-        yaxis=dict(title="CD", gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
-        height=400,
-        margin=dict(l=50, r=20, t=20, b=40)
-    )
-    st.plotly_chart(fig5, use_container_width=True)
 
-with col_d2:
-    st.markdown('<p class="section-header">ISA Atmosphere Profile</p>', unsafe_allow_html=True)
-    alt_profile = np.linspace(0, 20000, 200)
-    temp_profile = []
-    sos_profile = []
-    rho_profile = []
-    for a in alt_profile:
-        if a <= 11000:
-            t = 288.15 - 0.0065 * a
-            p = 101325 * (t / 288.15) ** 5.2561
-        else:
-            t = 216.65
-            p = 22632 * np.exp(-0.00015769 * (a - 11000))
-        r = p / (287.05 * t)
-        temp_profile.append(t - 273.15)
-        sos_profile.append(np.sqrt(1.4 * 287.05 * t))
-        rho_profile.append(r)
+# ============================================================
+# TAB 4: ABOUT
+# ============================================================
+with tab_about:
+    st.markdown('<p class="section-header">About VAJRA</p>', unsafe_allow_html=True)
 
-    fig6 = go.Figure()
-    fig6.add_trace(go.Scatter(
-        x=temp_profile, y=alt_profile / 1000, mode='lines',
-        line=dict(color='#ff6b35', width=2), name='Temperature (°C)'
-    ))
-    fig6.add_trace(go.Scatter(
-        x=[t - 273.15 for t in [temp]], y=[altitude / 1000], mode='markers',
-        marker=dict(size=10, color='#00f0ff', symbol='star'),
-        name='Current Alt', showlegend=True
-    ))
+    st.markdown("""
+    <div class="hud-card">
+        <h3 style="font-family:Orbitron,monospace; color:#00f0ff; letter-spacing:3px; margin-top:0;">WHAT IS VAJRA?</h3>
+        <p style="font-family:Rajdhani,sans-serif; color:#8ab4d4; font-size:1.1rem; line-height:1.8;">
+        VAJRA is an interactive physics simulator showcasing <b style="color:#ff6b35;">India's indigenous aerospace capabilities</b>.
+        Built with real engineering parameters, it lets you explore the physics behind some of India's most
+        advanced defense and space systems.
+        </p>
+        <p style="font-family:Rajdhani,sans-serif; color:#8ab4d4; font-size:1.1rem; line-height:1.8;">
+        Every simulation uses <b style="color:#00f0ff;">real physics models</b> — International Standard Atmosphere,
+        compressible aerodynamics, rocket propulsion equations, and trajectory mechanics — not approximations.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    fig6.add_hline(y=11, line_dash="dot", line_color="rgba(255,255,0,0.3)",
-                   annotation_text="Tropopause 11km", annotation_font=dict(color='yellow', size=9))
+    st.markdown("""
+    <div class="hud-card">
+        <h3 style="font-family:Orbitron,monospace; color:#00f0ff; letter-spacing:3px; margin-top:0;">PLATFORMS SIMULATED</h3>
+        <div class="specs-grid" style="grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+          <div class="spec-item" style="padding:15px;">
+            <span class="spec-val">HAL TEJAS</span>
+            <span class="spec-label">Light Combat Aircraft Mk1A</span>
+            <p style="color:#5a9fd4; font-size:0.8rem; margin:5px 0 0;">Supersonic flight physics, Mach cone, sonic boom, aerodynamic forces</p>
+          </div>
+          <div class="spec-item" style="padding:15px;">
+            <span class="spec-val">ISRO PSLV/LVM3</span>
+            <span class="spec-label">Launch Vehicle Trajectory</span>
+            <p style="color:#5a9fd4; font-size:0.8rem; margin:5px 0 0;">Multi-stage rocket trajectory, velocity, G-force profiles</p>
+          </div>
+          <div class="spec-item" style="padding:15px;">
+            <span class="spec-val">BRAHMOS</span>
+            <span class="spec-label">Cruise Missile</span>
+            <p style="color:#5a9fd4; font-size:0.8rem; margin:5px 0 0;">Supersonic flight profile, sea-skimming terminal phase</p>
+          </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    fig6.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(8,12,22,0.9)',
-        xaxis=dict(title="Temperature (°C)", gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
-        yaxis=dict(title="Altitude (km)", gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
-        height=400,
-        margin=dict(l=50, r=20, t=20, b=40)
-    )
-    st.plotly_chart(fig6, use_container_width=True)
+    st.markdown("""
+    <div class="hud-card">
+        <h3 style="font-family:Orbitron,monospace; color:#00f0ff; letter-spacing:3px; margin-top:0;">PHYSICS MODELS</h3>
+        <div style="font-family:Rajdhani,sans-serif; color:#8ab4d4; font-size:1rem; line-height:2;">
+        ✦ International Standard Atmosphere (ISA) — troposphere + stratosphere<br>
+        ✦ Mach cone geometry — θ = arcsin(1/M)<br>
+        ✦ Sonic boom N-wave pressure profile<br>
+        ✦ Tsiolkovsky rocket equation for staging<br>
+        ✦ Drag models with transonic wave drag rise<br>
+        ✦ Dynamic pressure and aerodynamic force balance<br>
+        ✦ Gravity turn trajectory approximation<br>
+        ✦ Prandtl-Glauert compressibility correction
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- SONIC BOOM GROUND FOOTPRINT ---
-if mach >= 1.0:
-    st.markdown("---")
-    st.markdown('<p class="section-header">Sonic Boom Ground Footprint</p>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="hud-card">
+        <h3 style="font-family:Orbitron,monospace; color:#ff6b35; letter-spacing:3px; margin-top:0;">COMING SOON</h3>
+        <div style="font-family:Rajdhani,sans-serif; color:#8ab4d4; font-size:1rem; line-height:2;">
+        ◈ Chandrayaan orbital mechanics simulator<br>
+        ◈ Gaganyaan re-entry heat shield analysis<br>
+        ◈ AMCA (Advanced Medium Combat Aircraft) stealth profile<br>
+        ◈ Akash missile intercept trajectory<br>
+        ◈ Live ISRO satellite tracking<br>
+        ◈ Tejas Mk1A spotting log + community map<br>
+        ◈ Mobile app (Play Store / App Store)
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    boom_width = altitude * np.tan(np.radians(half_angle_alert))
-    boom_carpet_width = boom_width * 2 / 1000
-
-    ground_x = np.linspace(-boom_carpet_width / 2, boom_carpet_width / 2, 200)
-    ground_intensity = np.exp(-2 * (ground_x / (boom_carpet_width / 2)) ** 2)
-    overpressure_ground = boom_strength * ground_intensity * (1.225 / rho) ** 0.5
-
-    fig7 = go.Figure()
-    fig7.add_trace(go.Scatter(
-        x=ground_x, y=overpressure_ground, mode='lines',
-        fill='tozeroy',
-        line=dict(color='#ff4444', width=2),
-        fillcolor='rgba(255,50,50,0.15)',
-        name='Overpressure'
-    ))
-    fig7.add_annotation(
-        x=0, y=max(overpressure_ground),
-        text=f"Peak ΔP ≈ {max(overpressure_ground):.2f}<br>Carpet width ≈ {boom_carpet_width:.1f} km",
-        font=dict(color='#ff6b6b', size=12, family='Rajdhani'),
-        showarrow=True, arrowcolor='#ff4444'
-    )
-
-    fig7.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(8,12,22,0.9)',
-        xaxis=dict(title="Lateral Distance (km)", gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
-        yaxis=dict(title="Relative Overpressure", gridcolor='rgba(0,240,255,0.08)', color='#5a9fd4'),
-        height=350,
-        margin=dict(l=50, r=20, t=20, b=40)
-    )
-    st.plotly_chart(fig7, use_container_width=True)
 
 # --- FOOTER ---
 st.markdown("---")
 st.markdown("""
 <div style="text-align:center; padding:15px;">
     <p style="font-family:'Orbitron',monospace; color:rgba(0,240,255,0.4); font-size:0.7rem; letter-spacing:4px;">
-    VAJRA SIMULATOR v2.0 — BUILT BY ATHARV SHUKLA</p>
+    VAJRA v3.0 — BUILT BY ATHARV SHUKLA</p>
     <p style="font-family:'Rajdhani',sans-serif; color:rgba(90,159,212,0.3); font-size:0.7rem; letter-spacing:2px;">
-    AMITY INTERNATIONAL SCHOOL SEC 46 GURGAON | AEROSPACE ENGINEERING PROJECT</p>
+    AMITY INTERNATIONAL SCHOOL SEC 46 GURGAON | INDIAN AEROSPACE SIMULATOR</p>
 </div>
 """, unsafe_allow_html=True)
