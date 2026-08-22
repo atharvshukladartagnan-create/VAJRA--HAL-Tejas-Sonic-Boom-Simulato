@@ -72,9 +72,7 @@ st.markdown("""
 .alert-normal { background: rgba(0,200,100,0.1); border-left: 4px solid #00c864; color: #00ff7f; }
 .alert-limit { background: rgba(255,0,0,0.1); border-left: 4px solid #ff0000; color: #ff4444; }
 .alert-info { background: rgba(0,150,255,0.1); border-left: 4px solid #00a8ff; color: #5ac8fa; }
-.learn-box { background: rgba(0,150,255,0.05); border: 1px solid rgba(0,168,255,0.2); border-radius: 8px; padding: 12px 16px; margin: 6px 0; font-family: 'Rajdhani', sans-serif; color: #7ab8d4; font-size: 0.95rem; line-height: 1.6; }
 div[data-testid="stSidebar"] { background: linear-gradient(180deg, #060d18, #0a1628, #060d18); border-right: 1px solid rgba(0,240,255,0.2); }
-.nav-cat { font-family: 'Orbitron', monospace; font-size: 0.65rem; color: #ff6b35; letter-spacing: 3px; text-transform: uppercase; margin: 12px 0 4px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -146,7 +144,8 @@ def show_launch_charts(name, t_sim, alt_sim, vel_sim, acc_sim, mach_sim, stage_b
     plotly_hud_layout(fig_traj, height=400)
     st.plotly_chart(fig_traj, use_container_width=True)
 
-    st.markdown('<div class="learn-box">The orange curve shows the rocket climbing through the atmosphere. Dotted lines mark <b>stage separations</b> — when an empty fuel tank is dropped so the rocket gets lighter and accelerates faster.</div>', unsafe_allow_html=True)
+    with st.expander("What am I looking at?"):
+        st.markdown("The orange curve shows the rocket climbing through the atmosphere. Dotted lines mark **stage separations** — when an empty fuel tank is dropped so the rocket gets lighter and accelerates faster.")
 
     vc1, vc2 = st.columns(2)
     with vc1:
@@ -158,7 +157,8 @@ def show_launch_charts(name, t_sim, alt_sim, vel_sim, acc_sim, mach_sim, stage_b
             xaxis_title="Time (s)", yaxis_title="Velocity (m/s)")
         plotly_hud_layout(fig_vel, height=350)
         st.plotly_chart(fig_vel, use_container_width=True)
-        st.markdown('<div class="learn-box">Speed builds with each stage. To reach orbit you need ~7,800 m/s (28,000 km/h) — 23x the speed of sound.</div>', unsafe_allow_html=True)
+        with st.expander("About velocity"):
+            st.markdown("Speed builds with each stage. To reach orbit you need ~7,800 m/s (28,000 km/h) — 23x the speed of sound.")
     with vc2:
         fig_g = go.Figure()
         fig_g.add_trace(go.Scatter(x=t_sim, y=acc_sim, mode='lines',
@@ -170,7 +170,8 @@ def show_launch_charts(name, t_sim, alt_sim, vel_sim, acc_sim, mach_sim, stage_b
             xaxis_title="Time (s)", yaxis_title="G-force")
         plotly_hud_layout(fig_g, height=350)
         st.plotly_chart(fig_g, use_container_width=True)
-        st.markdown('<div class="learn-box">As fuel burns the rocket gets lighter but thrust stays the same, so G-force <b>rises</b> through each stage. The red line is the human tolerance limit (~6G).</div>', unsafe_allow_html=True)
+        with st.expander("About G-force"):
+            st.markdown("As fuel burns the rocket gets lighter but thrust stays the same, so G-force **rises** through each stage. The red line is the human tolerance limit (~6G).")
 
     st.markdown(f"""
     <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
@@ -202,24 +203,15 @@ st.markdown('<p class="hud-subtitle">Indian Aerospace Simulator Platform</p>', u
 # --- SIDEBAR NAVIGATION ---
 st.sidebar.markdown('<p class="section-header">Navigate</p>', unsafe_allow_html=True)
 
-st.sidebar.markdown('<p class="nav-cat">Defence</p>', unsafe_allow_html=True)
-st.sidebar.markdown('<p class="nav-cat">ISRO</p>', unsafe_allow_html=True)
-st.sidebar.markdown('<p class="nav-cat">Private Space</p>', unsafe_allow_html=True)
+category = st.sidebar.selectbox("Category", ["Defence", "ISRO", "Private Space", "About"], label_visibility="collapsed")
 
-page = st.sidebar.selectbox("Select Platform", [
-    "HAL Tejas Mk1A",
-    "BrahMos Missile",
-    "---",
-    "ISRO PSLV-XL",
-    "ISRO GSLV Mk III (LVM3)",
-    "---",
-    "Agnikul Cosmos — Agnibaan",
-    "Skyroot — Vikram-1",
-    "---",
-    "About VAJRA",
-], label_visibility="collapsed")
-
-if page.startswith("---"):
+if category == "Defence":
+    page = st.sidebar.radio("Platform", ["HAL Tejas Mk1A", "BrahMos Missile"], label_visibility="collapsed")
+elif category == "ISRO":
+    page = st.sidebar.radio("Rocket", ["PSLV-XL", "GSLV Mk III (LVM3)"], label_visibility="collapsed")
+elif category == "Private Space":
+    page = st.sidebar.radio("Company", ["Agnikul Cosmos — Agnibaan", "Skyroot — Vikram-1"], label_visibility="collapsed")
+else:
     page = "About VAJRA"
 
 st.sidebar.markdown("---")
@@ -231,9 +223,9 @@ st.sidebar.markdown("---")
 if page == "HAL Tejas Mk1A":
     st.sidebar.markdown('<p class="section-header">Tejas Controls</p>', unsafe_allow_html=True)
     mach = st.sidebar.slider("Mach Number", 0.1, 1.8, 0.8, 0.01,
-        help="Mach = speed ÷ speed of sound. Tejas maxes out at Mach 1.8.")
+        help="Mach = speed / speed of sound. Tejas maxes out at Mach 1.8.")
     altitude = st.sidebar.slider("Altitude (m)", 0, 16500, 5000, 100,
-        help="Height above sea level. Tejas ceiling is 16,500 m. Air gets thinner higher up.")
+        help="Height above sea level. Tejas ceiling is 16,500 m.")
 
     TEJAS_WING_AREA = 38.4
     TEJAS_MASS = 9800
@@ -285,7 +277,9 @@ if page == "HAL Tejas Mk1A":
 
     # --- Main content ---
     st.markdown('<p class="section-header">HAL Tejas Mk1A — Supersonic Flight Simulator</p>', unsafe_allow_html=True)
-    st.markdown('<div class="learn-box">India\'s indigenous Light Combat Aircraft. Adjust Mach and altitude in the sidebar to see how flight physics change in real time.</div>', unsafe_allow_html=True)
+
+    with st.expander("About Tejas"):
+        st.markdown("India's indigenous Light Combat Aircraft. Adjust Mach and altitude in the sidebar to see how flight physics change in real time.")
 
     # Metrics bar
     st.markdown(f"""
@@ -298,7 +292,9 @@ if page == "HAL Tejas Mk1A":
       <div class="hud-metric"><span class="value">{g_load:.1f}G</span><span class="label">G-Load</span></div>
     </div>
     """, unsafe_allow_html=True)
-    st.markdown(f'<div class="learn-box"><b>Mach</b> = speed ÷ speed of sound. <b>Outside Temp</b> drops ~6.5°C every km up. <b>G-Load</b> = how many times your body weight you feel (1G = normal, fighter pilots pull up to 9G).</div>', unsafe_allow_html=True)
+
+    with st.expander("What do these numbers mean?"):
+        st.markdown("**Mach** = speed / speed of sound. **Outside Temp** drops ~6.5 C every km up. **G-Load** = how many times your body weight you feel (1G = normal, fighter pilots pull up to 9G).")
 
     # Alerts
     if mach >= 1.0:
@@ -343,7 +339,8 @@ if page == "HAL Tejas Mk1A":
                     bgcolor='rgb(8,12,22)', aspectmode='data'),
                 paper_bgcolor='rgba(0,0,0,0)', height=500, margin=dict(l=0, r=0, t=40, b=0))
             st.plotly_chart(fig1, use_container_width=True)
-            st.markdown(f'<div class="learn-box">When Tejas flies faster than sound, air piles up into a cone-shaped shockwave behind the jet — like the V-wake behind a boat. At Mach {mach:.1f}, the cone half-angle is <b>{half_angle:.1f}°</b>. Faster = narrower cone.</div>', unsafe_allow_html=True)
+            with st.expander("How does a Mach cone work?"):
+                st.markdown(f"When Tejas flies faster than sound, air piles up into a cone-shaped shockwave behind the jet — like the V-wake behind a boat. At Mach {mach:.1f}, the cone half-angle is **{half_angle:.1f} degrees**. Faster = narrower cone.")
         else:
             st.markdown('<div class="hud-card" style="text-align:center;padding:60px 20px;"><p style="font-family:Orbitron,monospace;color:#5a9fd4;letter-spacing:2px;">NO SHOCKWAVE<br><span style="font-size:0.8rem;color:#7ab8d4;">Increase Mach above 1.0 to see the Mach cone form</span></p></div>', unsafe_allow_html=True)
 
@@ -375,9 +372,11 @@ if page == "HAL Tejas Mk1A":
         plotly_hud_layout(fig2, height=500)
         st.plotly_chart(fig2, use_container_width=True)
         if mach >= 1.0:
-            st.markdown('<div class="learn-box">A sonic boom sounds like a double bang. Pressure spikes up (front shock), drops below normal, then spikes again (rear shock). This <b>N-shape</b> is why it\'s called an N-wave. The dashed line is normal atmospheric pressure.</div>', unsafe_allow_html=True)
+            with st.expander("What is an N-wave?"):
+                st.markdown("A sonic boom sounds like a double bang. Pressure spikes up (front shock), drops below normal, then spikes again (rear shock). This **N-shape** is why it's called an N-wave. The dashed line is normal atmospheric pressure.")
         else:
-            st.markdown('<div class="learn-box">Below Mach 1 there\'s no sonic boom. Pressure changes smoothly around the aircraft. The dashed line is normal atmospheric pressure (P∞).</div>', unsafe_allow_html=True)
+            with st.expander("About pressure"):
+                st.markdown("Below Mach 1 there's no sonic boom. Pressure changes smoothly around the aircraft. The dashed line is normal atmospheric pressure (P-infinity).")
 
     # Forces + Envelope
     st.markdown("---")
@@ -399,7 +398,8 @@ if page == "HAL Tejas Mk1A":
         fig3.update_layout(yaxis=dict(color='#c0d8ef', tickfont=dict(size=14, family='Rajdhani')),
                            xaxis=dict(title="Force (kN)"), margin=dict(l=100, r=60, t=20, b=40))
         st.plotly_chart(fig3, use_container_width=True)
-        st.markdown(f'<div class="learn-box"><b>Lift</b> (wings push up) vs <b>Weight</b> (gravity pulls down). <b>Thrust</b> (engine pushes forward) vs <b>Drag</b> (air resistance slows you). For level flight at constant speed, Lift=Weight and Thrust=Drag. Currently: <b>{bal}</b>.</div>', unsafe_allow_html=True)
+        with st.expander("What are the four forces?"):
+            st.markdown(f"**Lift** (wings push up) vs **Weight** (gravity pulls down). **Thrust** (engine pushes forward) vs **Drag** (air resistance). For level flight at constant speed, Lift=Weight and Thrust=Drag. Currently: **{bal}**.")
 
     with cf2:
         st.markdown('<p class="section-header">Flight Envelope</p>', unsafe_allow_html=True)
@@ -423,7 +423,8 @@ if page == "HAL Tejas Mk1A":
         plotly_hud_layout(fig4)
         fig4.update_layout(xaxis=dict(title="Mach"), yaxis=dict(title="Altitude (km)"))
         st.plotly_chart(fig4, use_container_width=True)
-        st.markdown('<div class="learn-box">The orange area is where Tejas <b>can</b> fly — every valid Mach + altitude combo. The blue star is your current position. Outside the envelope: either too slow to generate enough lift, or beyond structural/engine limits.</div>', unsafe_allow_html=True)
+        with st.expander("What is a flight envelope?"):
+            st.markdown("The orange area is where Tejas **can** fly — every valid Mach + altitude combo. The blue star is your current position. Outside the envelope: either too slow to generate enough lift, or beyond structural/engine limits.")
 
     # Drag + Atmosphere
     st.markdown("---")
@@ -452,7 +453,8 @@ if page == "HAL Tejas Mk1A":
         plotly_hud_layout(fig5, height=400)
         fig5.update_layout(xaxis=dict(title="Mach"), yaxis=dict(title="CD"))
         st.plotly_chart(fig5, use_container_width=True)
-        st.markdown('<div class="learn-box"><b>Drag coefficient</b> measures air resistance. Watch it spike near Mach 1 — that\'s the <b>sound barrier</b> (transonic drag rise). Past Mach 1.2 it drops as the aircraft is fully supersonic. This spike is why breaking the sound barrier needs so much thrust.</div>', unsafe_allow_html=True)
+        with st.expander("What is drag coefficient?"):
+            st.markdown("**Drag coefficient** measures air resistance. Watch it spike near Mach 1 — that's the **sound barrier** (transonic drag rise). Past Mach 1.2 it drops as the aircraft is fully supersonic. This spike is why breaking the sound barrier needs so much thrust.")
 
     with cd2:
         st.markdown('<p class="section-header">ISA Atmosphere Profile</p>', unsafe_allow_html=True)
@@ -467,7 +469,8 @@ if page == "HAL Tejas Mk1A":
         plotly_hud_layout(fig6, height=400)
         fig6.update_layout(xaxis=dict(title="Temperature (°C)"), yaxis=dict(title="Altitude (km)"))
         st.plotly_chart(fig6, use_container_width=True)
-        st.markdown('<div class="learn-box">Temperature drops 6.5°C per km up to 11 km (<b>troposphere</b>), then stays flat at -56.5°C (<b>stratosphere</b>). This is the International Standard Atmosphere (ISA) — the global model pilots and engineers use to calculate aircraft performance.</div>', unsafe_allow_html=True)
+        with st.expander("What is the ISA model?"):
+            st.markdown("Temperature drops 6.5 C per km up to 11 km (**troposphere**), then stays flat at -56.5 C (**stratosphere**). This is the International Standard Atmosphere (ISA) — the global model pilots and engineers use to calculate aircraft performance.")
 
     # Sonic boom footprint
     if mach >= 1.0:
@@ -487,13 +490,14 @@ if page == "HAL Tejas Mk1A":
         plotly_hud_layout(fig7, height=350)
         fig7.update_layout(xaxis=dict(title="Lateral Distance (km)"), yaxis=dict(title="Overpressure"))
         st.plotly_chart(fig7, use_container_width=True)
-        st.markdown(f'<div class="learn-box">Everyone inside this <b>{bw:.1f} km wide</b> strip on the ground hears the sonic boom. The peak is directly below the jet. Higher altitude = wider but weaker boom. Lower altitude = narrower but louder.</div>', unsafe_allow_html=True)
+        with st.expander("How wide is the boom?"):
+            st.markdown(f"Everyone inside this **{bw:.1f} km wide** strip on the ground hears the sonic boom. The peak is directly below the jet. Higher altitude = wider but weaker boom. Lower altitude = narrower but louder.")
 
 
 # ================================================================
 # ISRO PSLV-XL
 # ================================================================
-elif page == "ISRO PSLV-XL":
+elif page == "PSLV-XL":
     pslv = {
         "stages": [
             {"name": "PS1 + 6 Strap-ons", "thrust": 4846, "burn_time": 105, "mass_full": 295000, "mass_empty": 30000, "isp": 269},
@@ -519,7 +523,9 @@ elif page == "ISRO PSLV-XL":
     show_stage_cards(pslv["stages"])
 
     st.markdown('<p class="section-header">ISRO PSLV-XL — Polar Satellite Launch Vehicle</p>', unsafe_allow_html=True)
-    st.markdown('<div class="learn-box">ISRO\'s most reliable rocket with 60+ missions. PSLV launched Chandrayaan-1 (India\'s first Moon mission) and Mars Orbiter Mission (Mangalyaan). It uses a unique <b>alternating solid-liquid-solid-liquid</b> 4-stage design.</div>', unsafe_allow_html=True)
+
+    with st.expander("About PSLV"):
+        st.markdown("ISRO's most reliable rocket with 60+ missions. PSLV launched Chandrayaan-1 (India's first Moon mission) and Mars Orbiter Mission (Mangalyaan). It uses a unique **alternating solid-liquid-solid-liquid** 4-stage design.")
     st.markdown('<div class="alert-box alert-info">A rocket has stages because fuel tanks are heavy — once empty, you drop them. Each dropped stage means less dead weight, so the remaining fuel accelerates you more efficiently.</div>', unsafe_allow_html=True)
 
     t_sim, alt_sim, vel_sim, acc_sim, mach_sim, stage_boundaries = simulate_launch(pslv["stages"], pslv["total_mass"])
@@ -529,7 +535,7 @@ elif page == "ISRO PSLV-XL":
 # ================================================================
 # ISRO GSLV Mk III (LVM3)
 # ================================================================
-elif page == "ISRO GSLV Mk III (LVM3)":
+elif page == "GSLV Mk III (LVM3)":
     lvm3 = {
         "stages": [
             {"name": "S200 Boosters (x2)", "thrust": 5150, "burn_time": 130, "mass_full": 400000, "mass_empty": 62000, "isp": 274},
@@ -554,7 +560,9 @@ elif page == "ISRO GSLV Mk III (LVM3)":
     show_stage_cards(lvm3["stages"])
 
     st.markdown('<p class="section-header">ISRO GSLV Mk III (LVM3) — India\'s Heavy-Lift Rocket</p>', unsafe_allow_html=True)
-    st.markdown('<div class="learn-box">India\'s most powerful rocket. LVM3 launched Chandrayaan-3 (Moon landing, 2023) and will carry the <b>Gaganyaan</b> crew capsule for India\'s first human spaceflight. Its CE-20 cryogenic upper stage uses liquid hydrogen + oxygen — the most efficient chemical propulsion known.</div>', unsafe_allow_html=True)
+
+    with st.expander("About LVM3"):
+        st.markdown("India's most powerful rocket. LVM3 launched Chandrayaan-3 (Moon landing, 2023) and will carry the **Gaganyaan** crew capsule for India's first human spaceflight. Its CE-20 cryogenic upper stage uses liquid hydrogen + oxygen — the most efficient chemical propulsion known.")
     st.markdown('<div class="alert-box alert-info"><b>Cryogenic engine (Isp 443s)</b> is nearly twice as fuel-efficient as solid motors (Isp ~270s). Isp (specific impulse) measures how many seconds one kg of fuel can produce one kg of thrust. Higher = better.</div>', unsafe_allow_html=True)
 
     t_sim, alt_sim, vel_sim, acc_sim, mach_sim, stage_boundaries = simulate_launch(lvm3["stages"], lvm3["total_mass"])
@@ -588,8 +596,11 @@ elif page == "Agnikul Cosmos — Agnibaan":
     show_stage_cards(agnibaan["stages"])
 
     st.markdown('<p class="section-header">Agnikul Cosmos — Agnibaan Launch Vehicle</p>', unsafe_allow_html=True)
-    st.markdown('<div class="learn-box">India\'s first private orbital rocket company, incubated at <b>IIT Madras</b>. Agnikul created the world\'s first <b>single-piece 3D-printed rocket engine</b> (Agnilet). Their SOrTeD sub-orbital test flight in May 2024 made history — the first private Indian rocket to launch from Indian soil.</div>', unsafe_allow_html=True)
-    st.markdown('<div class="alert-box alert-info"><b>3D-printed engine:</b> Traditional rocket engines have 100+ parts welded together. Agnikul\'s Agnilet is printed as a single piece of metal — fewer failure points, faster to build, and cheaper. This could make space launches affordable for small satellites.</div>', unsafe_allow_html=True)
+
+    with st.expander("About Agnikul Cosmos"):
+        st.markdown("India's first private orbital rocket company, incubated at **IIT Madras**. Agnikul created the world's first **single-piece 3D-printed rocket engine** (Agnilet). Their SOrTeD sub-orbital test flight in May 2024 made history — the first private Indian rocket to launch from Indian soil.")
+    with st.expander("What is a 3D-printed engine?"):
+        st.markdown("Traditional rocket engines have 100+ parts welded together. Agnikul's Agnilet is printed as a single piece of metal — fewer failure points, faster to build, and cheaper. This could make space launches affordable for small satellites.")
     st.markdown('<div class="alert-box alert-transonic">Trajectory below is a simulation based on publicly available specifications. Agnibaan is still in development — actual flight data may differ.</div>', unsafe_allow_html=True)
 
     t_sim, alt_sim, vel_sim, acc_sim, mach_sim, stage_boundaries = simulate_launch(agnibaan["stages"], agnibaan["total_mass"])
@@ -624,8 +635,11 @@ elif page == "Skyroot — Vikram-1":
     show_stage_cards(vikram1["stages"])
 
     st.markdown('<p class="section-header">Skyroot Aerospace — Vikram-1 Launch Vehicle</p>', unsafe_allow_html=True)
-    st.markdown('<div class="learn-box">Founded by ex-ISRO engineers, Skyroot launched <b>Vikram-S</b> in November 2022 — India\'s first-ever private rocket (mission "Prarambh", meaning "The Beginning"). Named after Dr. Vikram Sarabhai, the father of India\'s space programme. Their Raman upper-stage engine is also 3D-printed.</div>', unsafe_allow_html=True)
-    st.markdown('<div class="alert-box alert-info"><b>Why private rockets matter:</b> ISRO builds large rockets for government missions. Private companies like Skyroot build smaller, cheaper rockets for the booming small-satellite industry — companies need quick, affordable access to orbit for Earth observation, IoT, and telecom constellations.</div>', unsafe_allow_html=True)
+
+    with st.expander("About Skyroot"):
+        st.markdown("Founded by ex-ISRO engineers, Skyroot launched **Vikram-S** in November 2022 — India's first-ever private rocket (mission \"Prarambh\", meaning \"The Beginning\"). Named after Dr. Vikram Sarabhai, the father of India's space programme. Their Raman upper-stage engine is also 3D-printed.")
+    with st.expander("Why do private rockets matter?"):
+        st.markdown("ISRO builds large rockets for government missions. Private companies like Skyroot build smaller, cheaper rockets for the booming small-satellite industry — companies need quick, affordable access to orbit for Earth observation, IoT, and telecom constellations.")
     st.markdown('<div class="alert-box alert-transonic">Trajectory below is a simulation based on publicly available specifications. Vikram-1 is still in development — actual flight data may differ.</div>', unsafe_allow_html=True)
 
     t_sim, alt_sim, vel_sim, acc_sim, mach_sim, stage_boundaries = simulate_launch(vikram1["stages"], vikram1["total_mass"])
@@ -664,7 +678,9 @@ elif page == "BrahMos Missile":
     """, unsafe_allow_html=True)
 
     st.markdown('<p class="section-header">BrahMos — World\'s Fastest Cruise Missile</p>', unsafe_allow_html=True)
-    st.markdown(f'<div class="learn-box">Joint India-Russia supersonic cruise missile. Named after rivers <b>Brahma</b>putra (India) and <b>Mos</b>kva (Russia). A <b>{sp["engine"].lower()}</b> engine sustains Mach {sp["speed_mach"]} cruise speed — the fastest cruise missile in operational service.</div>', unsafe_allow_html=True)
+
+    with st.expander("About BrahMos"):
+        st.markdown(f"Joint India-Russia supersonic cruise missile. Named after rivers **Brahma**putra (India) and **Mos**kva (Russia). A **{sp['engine'].lower()}** engine sustains Mach {sp['speed_mach']} cruise speed — the fastest cruise missile in operational service.")
 
     cruise_alt = sp["altitude_cruise"]
     sea_skim_alt = sp["altitude_sea_skim"]
@@ -709,7 +725,8 @@ elif page == "BrahMos Missile":
     plotly_hud_layout(fig_bm, height=450)
     st.plotly_chart(fig_bm, use_container_width=True)
 
-    st.markdown(f'<div class="learn-box"><b>3 phases:</b> (1) <b>Climb</b> — solid booster fires, missile climbs to {cruise_alt/1000:.0f} km, booster drops, {sp["engine"].lower()} ignites. (2) <b>Cruise</b> — sustained Mach {sp["speed_mach"]} flight. (3) <b>Terminal dive</b> — missile drops to just {sea_skim_alt}m above sea (sea-skimming), nearly invisible to ship radar.</div>', unsafe_allow_html=True)
+    with st.expander("Flight phases explained"):
+        st.markdown(f"**3 phases:** (1) **Climb** — solid booster fires, missile climbs to {cruise_alt/1000:.0f} km, booster drops, {sp['engine'].lower()} ignites. (2) **Cruise** — sustained Mach {sp['speed_mach']} flight. (3) **Terminal dive** — missile drops to just {sea_skim_alt}m above sea (sea-skimming), nearly invisible to ship radar.")
 
     st.markdown(f"""
     <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
@@ -733,9 +750,11 @@ elif page == "BrahMos Missile":
     """, unsafe_allow_html=True)
 
     if sp["engine"] == "Ramjet":
-        st.markdown('<div class="learn-box"><b>Ramjet</b> — A jet engine with zero moving parts. It uses the missile\'s own supersonic speed to ram-compress incoming air. Can\'t start from standstill (needs a booster first), but incredibly simple and powerful above Mach 2.</div>', unsafe_allow_html=True)
+        with st.expander("How does a Ramjet work?"):
+            st.markdown("A jet engine with zero moving parts. It uses the missile's own supersonic speed to ram-compress incoming air. Can't start from standstill (needs a booster first), but incredibly simple and powerful above Mach 2.")
     else:
-        st.markdown('<div class="learn-box"><b>Scramjet</b> — Supersonic Combustion Ramjet. Unlike a regular ramjet where air slows to subsonic inside the engine, a scramjet keeps airflow supersonic throughout. This enables Mach 5+ speeds but is extremely hard to engineer — fuel must ignite and burn in milliseconds.</div>', unsafe_allow_html=True)
+        with st.expander("How does a Scramjet work?"):
+            st.markdown("Supersonic Combustion Ramjet. Unlike a regular ramjet where air slows to subsonic inside the engine, a scramjet keeps airflow supersonic throughout. This enables Mach 5+ speeds but is extremely hard to engineer — fuel must ignite and burn in milliseconds.")
 
 
 # ================================================================
@@ -791,14 +810,14 @@ elif page == "About VAJRA":
     <div class="hud-card">
         <h3 style="font-family:Orbitron,monospace; color:#00f0ff; letter-spacing:3px; margin-top:0;">PHYSICS MODELS USED</h3>
         <div style="font-family:Rajdhani,sans-serif; color:#8ab4d4; font-size:1rem; line-height:2;">
-        ✦ International Standard Atmosphere (ISA) — troposphere + stratosphere<br>
-        ✦ Mach cone geometry — θ = arcsin(1/M)<br>
-        ✦ Sonic boom N-wave pressure profile<br>
-        ✦ Tsiolkovsky rocket equation for multi-stage propulsion<br>
-        ✦ Drag model with transonic wave drag rise<br>
-        ✦ Dynamic pressure and aerodynamic force balance<br>
-        ✦ Gravity-turn trajectory approximation<br>
-        ✦ Prandtl-Glauert compressibility correction
+        International Standard Atmosphere (ISA) — troposphere + stratosphere<br>
+        Mach cone geometry — arcsin(1/M)<br>
+        Sonic boom N-wave pressure profile<br>
+        Tsiolkovsky rocket equation for multi-stage propulsion<br>
+        Drag model with transonic wave drag rise<br>
+        Dynamic pressure and aerodynamic force balance<br>
+        Gravity-turn trajectory approximation<br>
+        Prandtl-Glauert compressibility correction
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -807,13 +826,13 @@ elif page == "About VAJRA":
     <div class="hud-card">
         <h3 style="font-family:Orbitron,monospace; color:#ff6b35; letter-spacing:3px; margin-top:0;">COMING SOON</h3>
         <div style="font-family:Rajdhani,sans-serif; color:#8ab4d4; font-size:1rem; line-height:2;">
-        ◈ Chandrayaan orbital mechanics simulator<br>
-        ◈ Gaganyaan re-entry heat shield analysis<br>
-        ◈ AMCA stealth aircraft profile<br>
-        ◈ Akash missile intercept trajectory<br>
-        ◈ Live ISRO satellite tracking<br>
-        ◈ Tejas Mk1A spotting log + community map<br>
-        ◈ Mobile app (Play Store / App Store)
+        Chandrayaan orbital mechanics simulator<br>
+        Gaganyaan re-entry heat shield analysis<br>
+        AMCA stealth aircraft profile<br>
+        Akash missile intercept trajectory<br>
+        Live ISRO satellite tracking<br>
+        Tejas Mk1A spotting log + community map<br>
+        Mobile app (Play Store / App Store)
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -824,7 +843,7 @@ st.markdown("---")
 st.markdown("""
 <div style="text-align:center; padding:15px;">
     <p style="font-family:'Orbitron',monospace; color:rgba(0,240,255,0.4); font-size:0.7rem; letter-spacing:4px;">
-    VAJRA v4.0 — BUILT BY ATHARV SHUKLA</p>
+    VAJRA v4.1 — BUILT BY ATHARV SHUKLA</p>
     <p style="font-family:'Rajdhani',sans-serif; color:rgba(90,159,212,0.3); font-size:0.7rem; letter-spacing:2px;">
     AMITY INTERNATIONAL SCHOOL SEC 46 GURGAON | INDIAN AEROSPACE SIMULATOR</p>
 </div>
