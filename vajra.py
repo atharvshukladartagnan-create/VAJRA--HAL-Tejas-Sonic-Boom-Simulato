@@ -203,7 +203,7 @@ category = st.sidebar.selectbox("Category", ["Defence", "ISRO", "Private Space",
 if category == "Defence":
     page = st.sidebar.radio("Platform", ["HAL Tejas Mk1A", "BrahMos Missile"], label_visibility="collapsed")
 elif category == "ISRO":
-    page = st.sidebar.radio("Rocket", ["PSLV-XL", "GSLV Mk III (LVM3)"], label_visibility="collapsed")
+    page = st.sidebar.radio("Mission", ["Chandrayaan 3", "PSLV-XL", "GSLV Mk III (LVM3)"], label_visibility="collapsed")
 elif category == "Private Space":
     page = st.sidebar.radio("Company", ["Agnikul Cosmos — Agnibaan", "Skyroot — Vikram-1"], label_visibility="collapsed")
 else:
@@ -484,6 +484,312 @@ if page == "HAL Tejas Mk1A":
 
 
 # ================================================================
+# CHANDRAYAAN 3
+# ================================================================
+elif page == "Chandrayaan 3":
+    MU_EARTH = 3.986e14
+    MU_MOON = 4.905e12
+    R_EARTH = 6371
+    R_MOON = 1737.4
+    EARTH_MOON_DIST = 384400
+
+    orbits = [
+        {"name": "Parking Orbit", "perigee": 170, "apogee": 36500, "dv": 0, "date": "14 Jul 2023"},
+        {"name": "Orbit Raise 1", "perigee": 173, "apogee": 41762, "dv": 38, "date": "15 Jul"},
+        {"name": "Orbit Raise 2", "perigee": 226, "apogee": 41603, "dv": 25, "date": "17 Jul"},
+        {"name": "Orbit Raise 3", "perigee": 228, "apogee": 51400, "dv": 42, "date": "18 Jul"},
+        {"name": "Orbit Raise 4", "perigee": 233, "apogee": 71351, "dv": 35, "date": "20 Jul"},
+        {"name": "Orbit Raise 5", "perigee": 236, "apogee": 127603, "dv": 50, "date": "25 Jul"},
+        {"name": "Trans Lunar Injection", "perigee": 288, "apogee": 369328, "dv": 1090, "date": "1 Aug"},
+    ]
+    lunar_orbits = [
+        {"name": "Lunar Orbit Insertion", "periselene": 164, "aposelene": 18074, "dv": 810, "date": "5 Aug"},
+        {"name": "Lunar Orbit 2", "periselene": 170, "aposelene": 4313, "dv": 54, "date": "6 Aug"},
+        {"name": "Lunar Orbit 3", "periselene": 174, "aposelene": 4313, "dv": 15, "date": "9 Aug"},
+        {"name": "Circular Orbit", "periselene": 153, "aposelene": 163, "dv": 85, "date": "14 Aug"},
+        {"name": "Pre-Landing Orbit", "periselene": 25, "aposelene": 134, "dv": 45, "date": "17 Aug"},
+    ]
+
+    st.sidebar.markdown('<p class="section-header">Chandrayaan 3</p>', unsafe_allow_html=True)
+    st.sidebar.markdown("""
+    <div class="specs-grid">
+      <div class="spec-item"><span class="spec-val">3,900 kg</span><span class="spec-label">Total Mass</span></div>
+      <div class="spec-item"><span class="spec-val">LVM3</span><span class="spec-label">Launch Vehicle</span></div>
+      <div class="spec-item"><span class="spec-val">1,752 kg</span><span class="spec-label">Propulsion Module</span></div>
+      <div class="spec-item"><span class="spec-val">1,749.86 kg</span><span class="spec-label">Lander + Rover</span></div>
+      <div class="spec-item"><span class="spec-val">26 kg</span><span class="spec-label">Pragyan Rover</span></div>
+      <div class="spec-item"><span class="spec-val">40 days</span><span class="spec-label">Mission Duration</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.sidebar.markdown("---")
+
+    phase = st.sidebar.radio("Mission Phase", ["Earth Orbit Raising", "Lunar Orbit & Landing"], label_visibility="collapsed")
+
+    st.markdown('<p class="section-header">Chandrayaan 3 — Lunar Landing Mission</p>', unsafe_allow_html=True)
+    with st.expander("About Chandrayaan 3"):
+        st.markdown("India's successful lunar landing mission. On **23 August 2023**, the Vikram lander touched down near the Moon's south pole, making India the **4th country** to soft-land on the Moon and the **1st to land near the south pole**. The Pragyan rover operated for 14 days, confirming the presence of sulphur on the lunar surface.")
+
+    if phase == "Earth Orbit Raising":
+        st.markdown('<div class="alert-box alert-info">Instead of flying directly to the Moon, ISRO gradually raised Earth orbit over 2 weeks. Each burn at perigee (closest point) stretches the apogee (farthest point) higher, until the spacecraft reaches lunar distance. This saves fuel compared to a direct shot.</div>', unsafe_allow_html=True)
+
+        orbit_idx = st.slider("Mission Step", 0, len(orbits) - 1, 0,
+            help="Step through each orbit raising maneuver")
+        orb = orbits[orbit_idx]
+
+        st.markdown(f"""
+        <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+          <div class="hud-metric"><span class="value">{orb['name']}</span><span class="label">Maneuver</span></div>
+          <div class="hud-metric"><span class="value">{orb['perigee']:,} km</span><span class="label">Perigee</span></div>
+          <div class="hud-metric"><span class="value">{orb['apogee']:,} km</span><span class="label">Apogee</span></div>
+          <div class="hud-metric"><span class="value">{orb['dv']} m/s</span><span class="label">Delta-v</span></div>
+          <div class="hud-metric"><span class="value">{orb['date']}</span><span class="label">Date</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.expander("What is delta-v?"):
+            st.markdown("Delta-v (change in velocity) is the currency of spaceflight. Every maneuver costs delta-v, and your fuel budget sets a hard limit. The vis-viva equation tells you the velocity at any point in an orbit: v = sqrt(GM * (2/r - 1/a)), where a is the semi-major axis.")
+
+        fig_orb = go.Figure()
+        theta = np.linspace(0, 2 * np.pi, 500)
+        earth_x = R_EARTH * np.cos(theta)
+        earth_y = R_EARTH * np.sin(theta)
+        fig_orb.add_trace(go.Scatter(x=earth_x, y=earth_y, mode='lines',
+            line=dict(color='#60a5fa', width=2), fill='toself',
+            fillcolor='rgba(96,165,250,0.15)', name='Earth'))
+
+        orbit_colors = ['rgba(255,153,51,0.25)', 'rgba(255,153,51,0.35)', 'rgba(255,153,51,0.45)',
+                        'rgba(255,153,51,0.55)', 'rgba(255,153,51,0.65)', 'rgba(255,153,51,0.8)', ACCENT]
+
+        for i, ob in enumerate(orbits[:orbit_idx + 1]):
+            rp = R_EARTH + ob['perigee']
+            ra = R_EARTH + ob['apogee']
+            a = (rp + ra) / 2
+            e = (ra - rp) / (ra + rp)
+            r = a * (1 - e**2) / (1 + e * np.cos(theta))
+            ox = r * np.cos(theta)
+            oy = r * np.sin(theta)
+            is_current = (i == orbit_idx)
+            fig_orb.add_trace(go.Scatter(x=ox, y=oy, mode='lines',
+                line=dict(color=orbit_colors[i], width=3 if is_current else 1.5,
+                          dash='solid' if is_current else 'dot'),
+                name=ob['name'], showlegend=is_current))
+
+        if orbit_idx == len(orbits) - 1:
+            moon_angle = np.pi * 0.3
+            moon_x = EARTH_MOON_DIST * np.cos(moon_angle)
+            moon_y = EARTH_MOON_DIST * np.sin(moon_angle)
+            mc = R_MOON * 8 * np.cos(theta) + moon_x
+            ms = R_MOON * 8 * np.sin(theta) + moon_y
+            fig_orb.add_trace(go.Scatter(x=mc, y=ms, mode='lines',
+                line=dict(color='#94a3b8', width=1.5), fill='toself',
+                fillcolor='rgba(148,163,184,0.2)', name='Moon'))
+
+        max_r = R_EARTH + orbits[orbit_idx]['apogee']
+        pad = max_r * 0.15
+        fig_orb.update_layout(
+            title=dict(text=f"Earth Orbit: {orb['name']}",
+                font=dict(color=CHART_TITLE, family='Archivo', size=14)),
+            xaxis=dict(scaleanchor='y', range=[-max_r - pad, max_r + pad]),
+            yaxis=dict(range=[-max_r - pad, max_r + pad]),
+            showlegend=True, legend=dict(font=dict(color=MUTED, size=10)))
+        plotly_layout(fig_orb, height=550)
+        st.plotly_chart(fig_orb, use_container_width=True)
+
+        with st.expander("Why raise orbits gradually?"):
+            st.markdown("A single burn to the Moon would need enormous thrust. Instead, ISRO fires engines at perigee (closest point to Earth) for a few minutes each pass. Each burn stretches the orbit's far side (apogee) further out. After 5 raises, the apogee reaches 127,000+ km, and one final TLI burn sends the spacecraft on a trajectory that reaches the Moon's gravitational sphere of influence (~66,000 km from the Moon).")
+
+        st.markdown('<p class="section-header">Delta-V Budget</p>', unsafe_allow_html=True)
+        dv_names = [o['name'] for o in orbits[:orbit_idx + 1]]
+        dv_vals = [o['dv'] for o in orbits[:orbit_idx + 1]]
+        dv_cum = np.cumsum(dv_vals)
+        fig_dv = go.Figure()
+        fig_dv.add_trace(go.Bar(x=dv_names, y=dv_vals,
+            marker=dict(color=[ACCENT if i == orbit_idx else 'rgba(255,153,51,0.4)' for i in range(len(dv_vals))]),
+            text=[f'{v} m/s' for v in dv_vals], textposition='outside',
+            textfont=dict(color=TEXT, size=11, family='JetBrains Mono'), name='Per Burn'))
+        fig_dv.update_layout(
+            title=dict(text="Delta-V per Maneuver",
+                font=dict(color=CHART_TITLE, family='Archivo', size=13)),
+            xaxis=dict(tickangle=-30), yaxis_title="Delta-V (m/s)")
+        plotly_layout(fig_dv, height=380)
+        st.plotly_chart(fig_dv, use_container_width=True)
+
+        total_dv = sum(dv_vals)
+        st.markdown(f"""
+        <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+          <div class="hud-metric"><span class="value">{total_dv:,} m/s</span><span class="label">Total Delta-V Used</span></div>
+          <div class="hud-metric"><span class="value">{orbit_idx + 1} / {len(orbits)}</span><span class="label">Burns Complete</span></div>
+          <div class="hud-metric"><span class="value">{orb['apogee']:,} km</span><span class="label">Current Apogee</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    else:
+        st.markdown('<div class="alert-box alert-info">After arriving at the Moon, Chandrayaan 3 fired engines to slow down and enter lunar orbit. Over several burns it circularized to a 100 km orbit, then lowered to 25 km perilune for the final powered descent to the surface.</div>', unsafe_allow_html=True)
+
+        lunar_idx = st.slider("Lunar Phase", 0, len(lunar_orbits) - 1, 0,
+            help="Step through lunar orbit maneuvers")
+        lorb = lunar_orbits[lunar_idx]
+
+        st.markdown(f"""
+        <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+          <div class="hud-metric"><span class="value">{lorb['name']}</span><span class="label">Phase</span></div>
+          <div class="hud-metric"><span class="value">{lorb['periselene']:,} km</span><span class="label">Periselene</span></div>
+          <div class="hud-metric"><span class="value">{lorb['aposelene']:,} km</span><span class="label">Aposelene</span></div>
+          <div class="hud-metric"><span class="value">{lorb['dv']} m/s</span><span class="label">Delta-v</span></div>
+          <div class="hud-metric"><span class="value">{lorb['date']}</span><span class="label">Date</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.expander("Periselene and aposelene?"):
+            st.markdown("Same as perigee/apogee but for the Moon. Periselene = closest point to the lunar surface. Aposelene = farthest point. Named after Selene, the Greek Moon goddess.")
+
+        fig_lunar = go.Figure()
+        moon_surface_x = R_MOON * np.cos(theta)
+        moon_surface_y = R_MOON * np.sin(theta)
+        fig_lunar.add_trace(go.Scatter(x=moon_surface_x, y=moon_surface_y, mode='lines',
+            line=dict(color='#94a3b8', width=2), fill='toself',
+            fillcolor='rgba(148,163,184,0.15)', name='Moon'))
+
+        lunar_colors = ['rgba(255,153,51,0.4)', 'rgba(255,153,51,0.5)', 'rgba(255,153,51,0.6)',
+                        'rgba(74,222,128,0.6)', 'rgba(74,222,128,0.9)']
+
+        for i, lo in enumerate(lunar_orbits[:lunar_idx + 1]):
+            rp = R_MOON + lo['periselene']
+            ra = R_MOON + lo['aposelene']
+            a = (rp + ra) / 2
+            e = (ra - rp) / (ra + rp)
+            r = a * (1 - e**2) / (1 + e * np.cos(theta))
+            ox = r * np.cos(theta)
+            oy = r * np.sin(theta)
+            is_current = (i == lunar_idx)
+            fig_lunar.add_trace(go.Scatter(x=ox, y=oy, mode='lines',
+                line=dict(color=lunar_colors[i], width=3 if is_current else 1.5,
+                          dash='solid' if is_current else 'dot'),
+                name=lo['name'], showlegend=is_current))
+
+        if lunar_idx == len(lunar_orbits) - 1:
+            land_angle = -np.pi / 2
+            land_x = (R_MOON + 5) * np.cos(land_angle)
+            land_y = (R_MOON + 5) * np.sin(land_angle)
+            fig_lunar.add_trace(go.Scatter(x=[land_x], y=[land_y], mode='markers+text',
+                marker=dict(size=12, color=GREEN, symbol='triangle-up'),
+                text=['VIKRAM LANDING'], textposition='top center',
+                textfont=dict(color=GREEN, size=11, family='Archivo'), showlegend=False))
+
+        max_lr = R_MOON + lunar_orbits[lunar_idx]['aposelene']
+        lpad = max_lr * 0.15
+        fig_lunar.update_layout(
+            title=dict(text=f"Lunar Orbit: {lorb['name']}",
+                font=dict(color=CHART_TITLE, family='Archivo', size=14)),
+            xaxis=dict(scaleanchor='y', range=[-max_lr - lpad, max_lr + lpad]),
+            yaxis=dict(range=[-max_lr - lpad, max_lr + lpad]),
+            showlegend=True, legend=dict(font=dict(color=MUTED, size=10)))
+        plotly_layout(fig_lunar, height=550)
+        st.plotly_chart(fig_lunar, use_container_width=True)
+
+        st.markdown('<p class="section-header">Orbital Velocity</p>', unsafe_allow_html=True)
+        rp_m = (R_MOON + lorb['periselene']) * 1000
+        ra_m = (R_MOON + lorb['aposelene']) * 1000
+        a_m = (rp_m + ra_m) / 2
+        v_peri = np.sqrt(MU_MOON * (2 / rp_m - 1 / a_m))
+        v_apo = np.sqrt(MU_MOON * (2 / ra_m - 1 / a_m))
+        orbital_period = 2 * np.pi * np.sqrt(a_m**3 / MU_MOON)
+
+        vc1, vc2 = st.columns(2)
+        with vc1:
+            angles = np.linspace(0, 2 * np.pi, 200)
+            e_orb = (ra_m - rp_m) / (ra_m + rp_m)
+            r_arr = a_m * (1 - e_orb**2) / (1 + e_orb * np.cos(angles))
+            v_arr = np.sqrt(MU_MOON * (2 / r_arr - 1 / a_m))
+            fig_vel = go.Figure()
+            fig_vel.add_trace(go.Scatter(x=np.degrees(angles), y=v_arr,
+                mode='lines', line=dict(color=GREEN, width=2.5), name='Velocity'))
+            fig_vel.add_hline(y=v_peri, line_dash="dot", line_color="rgba(255,153,51,0.4)",
+                annotation_text=f"Periselene: {v_peri:.0f} m/s",
+                annotation_font=dict(color=ACCENT, size=9))
+            fig_vel.add_hline(y=v_apo, line_dash="dot", line_color="rgba(148,163,184,0.4)",
+                annotation_text=f"Aposelene: {v_apo:.0f} m/s",
+                annotation_font=dict(color=MUTED, size=9))
+            fig_vel.update_layout(title=dict(text="Velocity Around Orbit",
+                font=dict(color=CHART_TITLE, family='Archivo', size=12)),
+                xaxis_title="True Anomaly (degrees)", yaxis_title="Velocity (m/s)")
+            plotly_layout(fig_vel, height=380)
+            st.plotly_chart(fig_vel, use_container_width=True)
+            with st.expander("Why does velocity change?"):
+                st.markdown("In an elliptical orbit, the spacecraft moves fastest at periselene (closest to Moon) and slowest at aposelene (farthest). This is Kepler's second law: equal areas in equal times. The vis-viva equation gives the exact velocity at any point.")
+
+        with vc2:
+            dv_lunar_names = [o['name'] for o in lunar_orbits[:lunar_idx + 1]]
+            dv_lunar_vals = [o['dv'] for o in lunar_orbits[:lunar_idx + 1]]
+            fig_ldv = go.Figure()
+            fig_ldv.add_trace(go.Bar(x=dv_lunar_names, y=dv_lunar_vals,
+                marker=dict(color=[GREEN if i == lunar_idx else 'rgba(74,222,128,0.35)' for i in range(len(dv_lunar_vals))]),
+                text=[f'{v} m/s' for v in dv_lunar_vals], textposition='outside',
+                textfont=dict(color=TEXT, size=11, family='JetBrains Mono')))
+            fig_ldv.update_layout(title=dict(text="Lunar Delta-V Budget",
+                font=dict(color=CHART_TITLE, family='Archivo', size=12)),
+                xaxis=dict(tickangle=-30), yaxis_title="Delta-V (m/s)")
+            plotly_layout(fig_ldv, height=380)
+            st.plotly_chart(fig_ldv, use_container_width=True)
+
+        total_lunar_dv = sum(dv_lunar_vals)
+        st.markdown(f"""
+        <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+          <div class="hud-metric"><span class="value">{v_peri:.0f} m/s</span><span class="label">V at Periselene</span></div>
+          <div class="hud-metric"><span class="value">{v_apo:.0f} m/s</span><span class="label">V at Aposelene</span></div>
+          <div class="hud-metric"><span class="value">{orbital_period/60:.0f} min</span><span class="label">Orbital Period</span></div>
+          <div class="hud-metric"><span class="value">{total_lunar_dv:,} m/s</span><span class="label">Total Lunar DV</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if lunar_idx == len(lunar_orbits) - 1:
+            st.markdown("---")
+            st.markdown('<p class="section-header">Powered Descent</p>', unsafe_allow_html=True)
+            st.markdown('<div class="alert-box alert-boom">From 25 km altitude, Vikram fires its 4 throttleable engines (800N each) for a 19-minute powered descent. The lander drops from 1.68 km/s horizontal velocity to zero, hovering at 800m for hazard detection before final touchdown at < 2 m/s vertical speed.</div>', unsafe_allow_html=True)
+
+            desc_time = np.linspace(0, 1140, 500)
+            desc_alt = 25 * np.exp(-desc_time / 350) * (1 - 0.3 * (desc_time / 1140)**2)
+            desc_alt = np.maximum(desc_alt, 0)
+            desc_hvel = 1680 * (1 - (desc_time / 1140)**1.5)
+            desc_hvel = np.maximum(desc_hvel, 0)
+
+            dc1, dc2 = st.columns(2)
+            with dc1:
+                fig_da = go.Figure()
+                fig_da.add_trace(go.Scatter(x=desc_time, y=desc_alt, mode='lines',
+                    line=dict(color=ACCENT, width=3), name='Altitude'))
+                fig_da.add_annotation(x=900, y=0.8, text="Hover @ 800m",
+                    font=dict(color=YELLOW, size=10, family='Rajdhani'), showarrow=True, arrowcolor=YELLOW)
+                fig_da.update_layout(title=dict(text="Descent Altitude Profile",
+                    font=dict(color=CHART_TITLE, family='Archivo', size=12)),
+                    xaxis_title="Time (s)", yaxis_title="Altitude (km)")
+                plotly_layout(fig_da, height=380)
+                st.plotly_chart(fig_da, use_container_width=True)
+
+            with dc2:
+                fig_dv2 = go.Figure()
+                fig_dv2.add_trace(go.Scatter(x=desc_time, y=desc_hvel, mode='lines',
+                    line=dict(color=RED, width=3), name='Horizontal Velocity'))
+                fig_dv2.update_layout(title=dict(text="Velocity During Descent",
+                    font=dict(color=CHART_TITLE, family='Archivo', size=12)),
+                    xaxis_title="Time (s)", yaxis_title="Horizontal Velocity (m/s)")
+                plotly_layout(fig_dv2, height=380)
+                st.plotly_chart(fig_dv2, use_container_width=True)
+
+            with st.expander("How does powered descent work?"):
+                st.markdown("The hardest part of the mission. Vikram must kill 1.68 km/s of horizontal velocity while dropping 25 km, using only its onboard fuel and autonomous guidance. At 800m it hovers, scans the surface with hazard detection cameras, picks a safe spot, and descends vertically. The final 2 meters are in free fall at less than 2 m/s. Chandrayaan 2's Vikram lander failed at this exact phase in 2019.")
+
+            st.markdown(f"""
+            <div class="hud-card" style="text-align:center; padding:20px;">
+              <span style="font-family:Archivo,sans-serif; font-size:1.2rem; font-weight:800; color:{GREEN}; letter-spacing:2px;">
+              TOUCHDOWN: 23 AUGUST 2023, 18:04 IST</span><br>
+              <span style="font-family:Rajdhani,sans-serif; font-size:1rem; color:#c0cfe0; letter-spacing:1px;">
+              Shiv Shakti Point, 69.37 S, 32.35 E | South Polar Region</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+
+# ================================================================
 # ISRO PSLV-XL
 # ================================================================
 elif page == "PSLV-XL":
@@ -752,6 +1058,10 @@ elif page == "About VAJRA":
             <span class="spec-label">ISRO — Heavy Lift Rocket</span>
           </div>
           <div class="spec-item" style="padding:15px;">
+            <span class="spec-val" style="font-size:0.85rem;">CHANDRAYAAN 3</span>
+            <span class="spec-label">ISRO — Lunar Landing Mission</span>
+          </div>
+          <div class="spec-item" style="padding:15px;">
             <span class="spec-val" style="font-size:0.85rem;">AGNIKUL AGNIBAAN</span>
             <span class="spec-label">Private — 3D Printed Rocket</span>
           </div>
@@ -773,7 +1083,9 @@ elif page == "About VAJRA":
         Drag model with transonic wave drag rise<br>
         Dynamic pressure and aerodynamic force balance<br>
         Gravity-turn trajectory approximation<br>
-        Prandtl-Glauert compressibility correction
+        Prandtl-Glauert compressibility correction<br>
+        Vis-viva equation for orbital velocity<br>
+        Keplerian orbit geometry (elliptical transfer)
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -781,7 +1093,6 @@ elif page == "About VAJRA":
     <div class="hud-card">
         <h3 style="font-family:Archivo,sans-serif; color:{ACCENT}; font-weight:800; letter-spacing:1px; margin-top:0;">COMING SOON</h3>
         <div style="font-family:Rajdhani,sans-serif; color:#c0cfe0; font-size:1rem; line-height:2;">
-        Chandrayaan orbital mechanics simulator<br>
         Gaganyaan re-entry heat shield analysis<br>
         AMCA stealth aircraft profile<br>
         Akash missile intercept trajectory<br>
@@ -798,7 +1109,7 @@ st.markdown("---")
 st.markdown(f"""
 <div style="text-align:center; padding:15px;">
     <p style="font-family:'Archivo',sans-serif; color:rgba(240,244,248,0.3); font-size:0.7rem; letter-spacing:3px; font-weight:700;">
-    VAJRA v5.0 — BUILT BY ATHARV SHUKLA</p>
+    VAJRA v6.0 — BUILT BY ATHARV SHUKLA</p>
     <p style="font-family:'Rajdhani',sans-serif; color:rgba(122,139,164,0.3); font-size:0.7rem; letter-spacing:2px;">
     AMITY INTERNATIONAL SCHOOL SEC 46 GURGAON | INDIAN AEROSPACE SIMULATOR</p>
 </div>
