@@ -478,74 +478,39 @@ col_f1, col_f2 = st.columns(2)
 with col_f1:
     st.markdown('<p class="section-header">Four Forces of Flight</p>', unsafe_allow_html=True)
 
+    force_names = ['LIFT ↑', 'WEIGHT ↓', 'THRUST →', 'DRAG ←']
+    force_vals = [lift / 1000, weight / 1000, thrust_required / 1000, drag / 1000]
+    force_colors_list = ['#00e878', '#ff5050', '#00b4ff', '#ffc800']
+
     fig3 = go.Figure()
-    max_force = max(lift, weight, thrust_required, drag, 1)
-    s = 3.0 / max_force
-
-    force_colors = {
-        'lift': '#00e878', 'weight': '#ff5050',
-        'thrust': '#00b4ff', 'drag': '#ffc800'
-    }
-
-    fig3.add_trace(go.Scatter(
-        x=[0, 0], y=[0, lift * s], mode='lines',
-        line=dict(color=force_colors['lift'], width=6),
-        name=f'Lift — {lift/1000:.1f} kN', showlegend=True
-    ))
-    fig3.add_trace(go.Scatter(
-        x=[0, 0], y=[0, -weight * s], mode='lines',
-        line=dict(color=force_colors['weight'], width=6),
-        name=f'Weight — {weight/1000:.1f} kN', showlegend=True
-    ))
-    fig3.add_trace(go.Scatter(
-        x=[0, thrust_required * s], y=[0, 0], mode='lines',
-        line=dict(color=force_colors['thrust'], width=6),
-        name=f'Thrust — {thrust_required/1000:.1f} kN', showlegend=True
-    ))
-    fig3.add_trace(go.Scatter(
-        x=[0, -drag * s], y=[0, 0], mode='lines',
-        line=dict(color=force_colors['drag'], width=6),
-        name=f'Drag — {drag/1000:.1f} kN', showlegend=True
+    fig3.add_trace(go.Bar(
+        y=force_names, x=force_vals, orientation='h',
+        marker=dict(color=force_colors_list,
+                    line=dict(width=1, color='rgba(255,255,255,0.1)')),
+        text=[f'{v:.1f} kN' for v in force_vals],
+        textposition='outside',
+        textfont=dict(color='#c0d8ef', size=14, family='Orbitron'),
+        hovertemplate='%{y}: %{x:.2f} kN<extra></extra>'
     ))
 
-    fig3.add_annotation(x=0, y=lift * s + 0.3, text=f"<b>LIFT</b><br>{lift/1000:.1f} kN",
-                        font=dict(size=13, color=force_colors['lift'], family='Rajdhani'),
-                        showarrow=False)
-    fig3.add_annotation(x=0, y=-weight * s - 0.3, text=f"<b>WEIGHT</b><br>{weight/1000:.1f} kN",
-                        font=dict(size=13, color=force_colors['weight'], family='Rajdhani'),
-                        showarrow=False)
-    fig3.add_annotation(x=thrust_required * s + 0.3, y=0, text=f"<b>THRUST</b><br>{thrust_required/1000:.1f} kN",
-                        font=dict(size=13, color=force_colors['thrust'], family='Rajdhani'),
-                        showarrow=False, xanchor='left')
-    fig3.add_annotation(x=-drag * s - 0.3, y=0, text=f"<b>DRAG</b><br>{drag/1000:.1f} kN",
-                        font=dict(size=13, color=force_colors['drag'], family='Rajdhani'),
-                        showarrow=False, xanchor='right')
+    balance_text = "BALANCED" if abs(lift - weight) < weight * 0.01 else "UNBALANCED"
+    balance_color = "#00e878" if balance_text == "BALANCED" else "#ff5050"
 
-    fig3.add_trace(go.Scatter(
-        x=[0], y=[0], mode='markers+text',
-        marker=dict(size=22, color='#00f0ff', symbol='diamond',
-                    line=dict(width=2, color='rgba(0,240,255,0.5)')),
-        text=['TEJAS'], textposition='bottom center',
-        textfont=dict(color='#00f0ff', size=10, family='Orbitron'),
-        showlegend=False, hoverinfo='text', hovertext='Aircraft CG'
-    ))
+    fig3.add_annotation(
+        x=max(force_vals) * 0.5, y=1.5,
+        text=f"<b>L/W: {balance_text}</b>",
+        font=dict(size=12, color=balance_color, family='Orbitron'),
+        showarrow=False
+    )
 
     fig3.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(8,12,22,0.9)',
-        xaxis=dict(range=[-5, 5], showgrid=False, zeroline=True,
-                   zerolinecolor='rgba(0,240,255,0.15)', showticklabels=False),
-        yaxis=dict(range=[-5, 5], showgrid=False, zeroline=True,
-                   zerolinecolor='rgba(0,240,255,0.15)', scaleanchor="x", showticklabels=False),
-        height=450,
-        legend=dict(
-            font=dict(color='#8ab4d4', size=11, family='Rajdhani'),
-            bgcolor='rgba(8,12,22,0.8)',
-            bordercolor='rgba(0,240,255,0.2)',
-            borderwidth=1,
-            x=0.01, y=0.99, xanchor='left', yanchor='top'
-        ),
-        margin=dict(l=20, r=20, t=20, b=20)
+        xaxis=dict(title="Force (kN)", gridcolor='rgba(0,240,255,0.08)',
+                   color='#5a9fd4', zeroline=True, zerolinecolor='rgba(0,240,255,0.15)'),
+        yaxis=dict(color='#c0d8ef', tickfont=dict(size=14, family='Rajdhani')),
+        height=450, showlegend=False,
+        margin=dict(l=100, r=60, t=20, b=40)
     )
     st.plotly_chart(fig3, use_container_width=True)
 
