@@ -482,38 +482,69 @@ with col_f1:
     max_force = max(lift, weight, thrust_required, drag, 1)
     s = 3.0 / max_force
 
-    forces_data = [
-        ("LIFT", 0, 0, 0, lift * s, "rgba(0,230,120,0.9)", f"{lift/1000:.1f} kN"),
-        ("WEIGHT", 0, 0, 0, -weight * s, "rgba(255,80,80,0.9)", f"{weight/1000:.1f} kN"),
-        ("THRUST", 0, 0, thrust_required * s, 0, "rgba(0,180,255,0.9)", f"{thrust_required/1000:.1f} kN"),
-        ("DRAG", 0, 0, -drag * s, 0, "rgba(255,200,0,0.9)", f"{drag/1000:.1f} kN"),
-    ]
-
-    for name, x0, y0, dx, dy, color, val in forces_data:
-        fig3.add_annotation(
-            x=dx, y=dy, ax=x0, ay=y0,
-            xref="x", yref="y", axref="x", ayref="y",
-            showarrow=True, arrowhead=2, arrowsize=1.8, arrowwidth=4,
-            arrowcolor=color,
-            text=f"<b>{name}</b><br>{val}",
-            font=dict(size=11, color=color, family='Rajdhani'),
-        )
+    force_colors = {
+        'lift': '#00e878', 'weight': '#ff5050',
+        'thrust': '#00b4ff', 'drag': '#ffc800'
+    }
 
     fig3.add_trace(go.Scatter(
-        x=[0], y=[0], mode='markers',
+        x=[0, 0], y=[0, lift * s], mode='lines',
+        line=dict(color=force_colors['lift'], width=6),
+        name=f'Lift — {lift/1000:.1f} kN', showlegend=True
+    ))
+    fig3.add_trace(go.Scatter(
+        x=[0, 0], y=[0, -weight * s], mode='lines',
+        line=dict(color=force_colors['weight'], width=6),
+        name=f'Weight — {weight/1000:.1f} kN', showlegend=True
+    ))
+    fig3.add_trace(go.Scatter(
+        x=[0, thrust_required * s], y=[0, 0], mode='lines',
+        line=dict(color=force_colors['thrust'], width=6),
+        name=f'Thrust — {thrust_required/1000:.1f} kN', showlegend=True
+    ))
+    fig3.add_trace(go.Scatter(
+        x=[0, -drag * s], y=[0, 0], mode='lines',
+        line=dict(color=force_colors['drag'], width=6),
+        name=f'Drag — {drag/1000:.1f} kN', showlegend=True
+    ))
+
+    fig3.add_annotation(x=0, y=lift * s + 0.3, text=f"<b>LIFT</b><br>{lift/1000:.1f} kN",
+                        font=dict(size=13, color=force_colors['lift'], family='Rajdhani'),
+                        showarrow=False)
+    fig3.add_annotation(x=0, y=-weight * s - 0.3, text=f"<b>WEIGHT</b><br>{weight/1000:.1f} kN",
+                        font=dict(size=13, color=force_colors['weight'], family='Rajdhani'),
+                        showarrow=False)
+    fig3.add_annotation(x=thrust_required * s + 0.3, y=0, text=f"<b>THRUST</b><br>{thrust_required/1000:.1f} kN",
+                        font=dict(size=13, color=force_colors['thrust'], family='Rajdhani'),
+                        showarrow=False, xanchor='left')
+    fig3.add_annotation(x=-drag * s - 0.3, y=0, text=f"<b>DRAG</b><br>{drag/1000:.1f} kN",
+                        font=dict(size=13, color=force_colors['drag'], family='Rajdhani'),
+                        showarrow=False, xanchor='right')
+
+    fig3.add_trace(go.Scatter(
+        x=[0], y=[0], mode='markers+text',
         marker=dict(size=22, color='#00f0ff', symbol='diamond',
                     line=dict(width=2, color='rgba(0,240,255,0.5)')),
+        text=['TEJAS'], textposition='bottom center',
+        textfont=dict(color='#00f0ff', size=10, family='Orbitron'),
         showlegend=False, hoverinfo='text', hovertext='Aircraft CG'
     ))
 
     fig3.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(8,12,22,0.9)',
-        xaxis=dict(range=[-4.5, 4.5], showgrid=False, zeroline=True,
+        xaxis=dict(range=[-5, 5], showgrid=False, zeroline=True,
                    zerolinecolor='rgba(0,240,255,0.15)', showticklabels=False),
-        yaxis=dict(range=[-4.5, 4.5], showgrid=False, zeroline=True,
+        yaxis=dict(range=[-5, 5], showgrid=False, zeroline=True,
                    zerolinecolor='rgba(0,240,255,0.15)', scaleanchor="x", showticklabels=False),
-        height=450, showlegend=False,
+        height=450,
+        legend=dict(
+            font=dict(color='#8ab4d4', size=11, family='Rajdhani'),
+            bgcolor='rgba(8,12,22,0.8)',
+            bordercolor='rgba(0,240,255,0.2)',
+            borderwidth=1,
+            x=0.01, y=0.99, xanchor='left', yanchor='top'
+        ),
         margin=dict(l=20, r=20, t=20, b=20)
     )
     st.plotly_chart(fig3, use_container_width=True)
