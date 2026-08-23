@@ -198,14 +198,16 @@ st.markdown('<p class="hud-subtitle">Indian Aerospace Simulator Platform</p>', u
 # --- SIDEBAR NAVIGATION ---
 st.sidebar.markdown('<p class="section-header">Navigate</p>', unsafe_allow_html=True)
 
-category = st.sidebar.selectbox("Category", ["Defence", "ISRO", "Private Space", "About"], label_visibility="collapsed")
+category = st.sidebar.selectbox("Category", ["Defence", "ISRO", "Private Space", "Explore", "About"], label_visibility="collapsed")
 
 if category == "Defence":
-    page = st.sidebar.radio("Platform", ["HAL Tejas Mk1A", "BrahMos Missile"], label_visibility="collapsed")
+    page = st.sidebar.radio("Platform", ["HAL Tejas Mk1A", "BrahMos Missile", "AMCA Stealth Fighter", "Akash Missile"], label_visibility="collapsed")
 elif category == "ISRO":
-    page = st.sidebar.radio("Mission", ["Chandrayaan 3", "PSLV-XL", "GSLV Mk III (LVM3)"], label_visibility="collapsed")
+    page = st.sidebar.radio("Mission", ["Chandrayaan 3", "Gaganyaan Re-entry", "PSLV-XL", "GSLV Mk III (LVM3)"], label_visibility="collapsed")
 elif category == "Private Space":
     page = st.sidebar.radio("Company", ["Agnikul Cosmos — Agnibaan", "Skyroot — Vikram-1"], label_visibility="collapsed")
+elif category == "Explore":
+    page = st.sidebar.radio("Tool", ["Compare Platforms", "Satellite Orbit Visualizer", "Quiz"], label_visibility="collapsed")
 else:
     page = "About VAJRA"
 
@@ -1023,6 +1025,681 @@ elif page == "BrahMos Missile":
 
 
 # ================================================================
+# AMCA STEALTH FIGHTER
+# ================================================================
+elif page == "AMCA Stealth Fighter":
+    st.sidebar.markdown('<p class="section-header">AMCA Controls</p>', unsafe_allow_html=True)
+    radar_power_kw = st.sidebar.slider("Radar Power (kW)", 1, 200, 50,
+        help="Transmitted power of the detecting radar system")
+    radar_freq_ghz = st.sidebar.slider("Radar Frequency (GHz)", 1.0, 18.0, 10.0, 0.5,
+        help="X-band (8-12 GHz) is most common for fighter radars")
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown('<p class="section-header">AMCA Specs</p>', unsafe_allow_html=True)
+    st.sidebar.markdown("""
+    <div class="specs-grid">
+      <div class="spec-item"><span class="spec-val">5th Gen</span><span class="spec-label">Generation</span></div>
+      <div class="spec-item"><span class="spec-val">25 t</span><span class="spec-label">MTOW</span></div>
+      <div class="spec-item"><span class="spec-val">M 1.8+</span><span class="spec-label">Max Speed</span></div>
+      <div class="spec-item"><span class="spec-val">Twin</span><span class="spec-label">Engines</span></div>
+      <div class="spec-item"><span class="spec-val">Internal</span><span class="spec-label">Weapons Bay</span></div>
+      <div class="spec-item"><span class="spec-val">HAL/ADA</span><span class="spec-label">Developer</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<p class="section-header">AMCA — Advanced Medium Combat Aircraft</p>', unsafe_allow_html=True)
+    with st.expander("About AMCA"):
+        st.markdown("India's upcoming 5th generation stealth fighter, designed by ADA (Aeronautical Development Agency) and HAL. Features internal weapons bays, radar-absorbent materials, and a planform designed to minimize radar cross section. First flight expected around 2025-2026. Will make India the 4th country to develop a domestic stealth fighter.")
+
+    aircraft_data = [
+        {"name": "Su-30MKI", "rcs": 10.0, "color": "#94a3b8", "gen": "4th Gen"},
+        {"name": "HAL Tejas", "rcs": 1.5, "color": ACCENT, "gen": "4.5 Gen"},
+        {"name": "Rafale", "rcs": 1.0, "color": "#60a5fa", "gen": "4.5 Gen"},
+        {"name": "AMCA", "rcs": 0.1, "color": GREEN, "gen": "5th Gen"},
+        {"name": "F-22 Raptor", "rcs": 0.0001, "color": RED, "gen": "5th Gen"},
+        {"name": "F-35", "rcs": 0.001, "color": YELLOW, "gen": "5th Gen"},
+    ]
+
+    st.markdown('<div class="alert-box alert-info">Radar Cross Section (RCS) measures how visible an aircraft is to radar, in square metres. A smaller RCS means the aircraft appears as a much smaller target. Stealth aircraft use special shaping and materials to scatter radar waves away from the receiver.</div>', unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('<p class="section-header">RCS Comparison (Log Scale)</p>', unsafe_allow_html=True)
+        fig_rcs = go.Figure()
+        names = [a['name'] for a in aircraft_data]
+        rcs_vals = [a['rcs'] for a in aircraft_data]
+        colors = [a['color'] for a in aircraft_data]
+        fig_rcs.add_trace(go.Bar(y=names, x=rcs_vals, orientation='h',
+            marker=dict(color=colors),
+            text=[f'{v} m²' for v in rcs_vals], textposition='outside',
+            textfont=dict(color=TEXT, size=11, family='JetBrains Mono')))
+        fig_rcs.update_layout(xaxis=dict(type='log', title='RCS (m², log scale)'),
+            yaxis=dict(autorange='reversed'))
+        plotly_layout(fig_rcs, height=400)
+        fig_rcs.update_layout(margin=dict(l=100, r=80))
+        st.plotly_chart(fig_rcs, use_container_width=True)
+        with st.expander("Why log scale?"):
+            st.markdown("RCS values span 5 orders of magnitude: from 10 m² (Su-30) down to 0.0001 m² (F-22). A log scale lets you see all of them on one chart. Each grid line is 10x smaller than the previous one.")
+
+    with col2:
+        st.markdown('<p class="section-header">Radar Detection Range</p>', unsafe_allow_html=True)
+        wavelength = 3e8 / (radar_freq_ghz * 1e9)
+        gain = 30
+        smin = 1e-13
+        detect_ranges = []
+        for a in aircraft_data:
+            r4 = (radar_power_kw * 1000 * (10**(gain/10))**2 * wavelength**2 * a['rcs']) / ((4 * np.pi)**3 * smin)
+            detect_ranges.append(r4**0.25 / 1000)
+        fig_det = go.Figure()
+        fig_det.add_trace(go.Bar(y=names, x=detect_ranges, orientation='h',
+            marker=dict(color=colors),
+            text=[f'{v:.0f} km' for v in detect_ranges], textposition='outside',
+            textfont=dict(color=TEXT, size=11, family='JetBrains Mono')))
+        fig_det.update_layout(xaxis=dict(title='Detection Range (km)'),
+            yaxis=dict(autorange='reversed'))
+        plotly_layout(fig_det, height=400)
+        fig_det.update_layout(margin=dict(l=100, r=80))
+        st.plotly_chart(fig_det, use_container_width=True)
+        with st.expander("What is detection range?"):
+            st.markdown(f"Using the radar equation with {radar_power_kw} kW at {radar_freq_ghz} GHz. Detection range scales with the **4th root** of RCS — so you need to reduce RCS by 16x to halve the detection distance. AMCA's low RCS means an enemy radar detects it much later than a conventional fighter.")
+
+    st.markdown("---")
+    st.markdown('<p class="section-header">Angular RCS Pattern</p>', unsafe_allow_html=True)
+    angles = np.linspace(0, 360, 720)
+    angles_rad = np.radians(angles)
+    rcs_tejas = 1.5 * (1 + 0.8 * np.abs(np.cos(angles_rad)) + 2.5 * np.exp(-((angles - 0)**2) / 200) +
+                 2.5 * np.exp(-((angles - 360)**2) / 200) + 1.5 * np.exp(-((angles - 180)**2) / 300))
+    rcs_amca = 0.1 * (1 + 0.3 * np.abs(np.cos(angles_rad)) + 0.8 * np.exp(-((angles - 0)**2) / 100) +
+                0.8 * np.exp(-((angles - 360)**2) / 100) + 0.5 * np.exp(-((angles - 180)**2) / 150))
+    fig_ang = go.Figure()
+    fig_ang.add_trace(go.Scatterpolar(r=rcs_tejas, theta=angles, mode='lines',
+        line=dict(color=ACCENT, width=2), name='HAL Tejas', fill='toself',
+        fillcolor='rgba(255,153,51,0.08)'))
+    fig_ang.add_trace(go.Scatterpolar(r=rcs_amca, theta=angles, mode='lines',
+        line=dict(color=GREEN, width=2), name='AMCA', fill='toself',
+        fillcolor='rgba(74,222,128,0.08)'))
+    fig_ang.update_layout(
+        polar=dict(bgcolor=CHART_BG, radialaxis=dict(type='log', color=CHART_AXIS, gridcolor=CHART_GRID),
+                   angularaxis=dict(color=CHART_AXIS, gridcolor=CHART_GRID)),
+        paper_bgcolor='rgba(0,0,0,0)', height=500, showlegend=True,
+        legend=dict(font=dict(color=MUTED, size=11)),
+        title=dict(text="RCS vs Aspect Angle (Tejas vs AMCA)", font=dict(color=CHART_TITLE, family='Archivo', size=14)))
+    st.plotly_chart(fig_ang, use_container_width=True)
+    with st.expander("Reading the radar pattern"):
+        st.markdown("0° is head-on (nose), 180° is tail-on. Stealth aircraft are designed to minimize the frontal RCS since that's the angle an enemy sees first. AMCA's angular shaping deflects radar energy to the sides instead of bouncing it back. Notice how AMCA's pattern is dramatically smaller than Tejas at every angle.")
+
+    tejas_detect = detect_ranges[1]
+    amca_detect = detect_ranges[3]
+    st.markdown(f"""
+    <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+      <div class="hud-metric"><span class="value">{aircraft_data[1]['rcs']} m²</span><span class="label">Tejas RCS</span></div>
+      <div class="hud-metric"><span class="value">{aircraft_data[3]['rcs']} m²</span><span class="label">AMCA RCS</span></div>
+      <div class="hud-metric"><span class="value">{aircraft_data[1]['rcs']/aircraft_data[3]['rcs']:.0f}x</span><span class="label">RCS Reduction</span></div>
+      <div class="hud-metric"><span class="value">{tejas_detect:.0f} km</span><span class="label">Tejas Detected</span></div>
+      <div class="hud-metric"><span class="value">{amca_detect:.0f} km</span><span class="label">AMCA Detected</span></div>
+      <div class="hud-metric"><span class="value">{tejas_detect - amca_detect:.0f} km</span><span class="label">Stealth Advantage</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ================================================================
+# AKASH MISSILE
+# ================================================================
+elif page == "Akash Missile":
+    st.sidebar.markdown('<p class="section-header">Akash Controls</p>', unsafe_allow_html=True)
+    target_alt_km = st.sidebar.slider("Target Altitude (km)", 0.1, 20.0, 8.0, 0.1,
+        help="Altitude of the incoming aircraft/missile")
+    target_speed_mach = st.sidebar.slider("Target Speed (Mach)", 0.5, 3.5, 1.2, 0.1,
+        help="Speed of the incoming threat")
+    target_range_km = st.sidebar.slider("Target Range (km)", 5, 30, 20,
+        help="Distance to target at launch")
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown('<p class="section-header">Akash Specs</p>', unsafe_allow_html=True)
+    st.sidebar.markdown("""
+    <div class="specs-grid">
+      <div class="spec-item"><span class="spec-val">M 2.5</span><span class="spec-label">Speed</span></div>
+      <div class="spec-item"><span class="spec-val">30 km</span><span class="spec-label">Range</span></div>
+      <div class="spec-item"><span class="spec-val">20 km</span><span class="spec-label">Ceiling</span></div>
+      <div class="spec-item"><span class="spec-val">720 kg</span><span class="spec-label">Weight</span></div>
+      <div class="spec-item"><span class="spec-val">Ramjet</span><span class="spec-label">Engine</span></div>
+      <div class="spec-item"><span class="spec-val">DRDO</span><span class="spec-label">Developer</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<p class="section-header">Akash — Surface to Air Missile System</p>', unsafe_allow_html=True)
+    with st.expander("About Akash"):
+        st.markdown("India's indigenous medium-range surface-to-air missile, developed by DRDO. Uses a ramjet sustainer for sustained Mach 2.5 flight. The Rajendra phased array radar tracks multiple targets simultaneously. Akash can engage targets from treetop height up to 20 km altitude, out to 30 km range. In service with both the Indian Army and Air Force.")
+
+    akash_speed = 2.5 * 340
+    target_speed = target_speed_mach * 340
+    n_pts = 300
+    t_max = target_range_km * 1000 / akash_speed * 1.3
+    t_arr = np.linspace(0, t_max, n_pts)
+
+    akash_x = np.zeros(n_pts)
+    akash_y = np.zeros(n_pts)
+    target_x = np.full(n_pts, target_range_km)
+    target_y = np.full(n_pts, target_alt_km)
+
+    closing_speed = akash_speed + target_speed * 0.3
+    t_intercept = target_range_km * 1000 / closing_speed
+    intercept_x = target_range_km - target_speed * 0.3 * t_intercept / 1000
+    intercept_y = target_alt_km
+
+    for i, t in enumerate(t_arr):
+        frac = min(t / t_intercept, 1.0)
+        akash_x[i] = intercept_x * (1 - (1 - frac)**1.2) * frac**0.3 + intercept_x * frac**1.5 * 0.3
+        akash_x[i] = min(intercept_x * frac**0.8 + intercept_x * 0.2 * frac**2, intercept_x)
+        climb_frac = min(frac * 1.5, 1.0)
+        akash_y[i] = intercept_y * (1 - np.cos(climb_frac * np.pi / 2))
+        target_x[i] = target_range_km - target_speed * 0.3 * t / 1000
+
+    st.markdown('<div class="alert-box alert-info">Akash uses proportional navigation: instead of flying straight at the target, it flies toward where the target will be. The missile continuously adjusts its heading to keep the line-of-sight rotation rate at zero, guaranteeing intercept.</div>', unsafe_allow_html=True)
+
+    fig_int = go.Figure()
+    fig_int.add_trace(go.Scatter(x=akash_x, y=akash_y, mode='lines',
+        line=dict(color=GREEN, width=3), name='Akash Missile'))
+    fig_int.add_trace(go.Scatter(x=target_x, y=target_y, mode='lines',
+        line=dict(color=RED, width=2, dash='dash'), name='Target'))
+    fig_int.add_trace(go.Scatter(x=[0], y=[0], mode='markers+text',
+        marker=dict(size=12, color=ACCENT, symbol='triangle-up'),
+        text=['LAUNCH'], textposition='top right',
+        textfont=dict(color=ACCENT, size=10, family='Archivo'), showlegend=False))
+    fig_int.add_trace(go.Scatter(x=[intercept_x], y=[intercept_y], mode='markers+text',
+        marker=dict(size=14, color=YELLOW, symbol='star'),
+        text=['INTERCEPT'], textposition='top left',
+        textfont=dict(color=YELLOW, size=11, family='Archivo'), showlegend=False))
+    fig_int.update_layout(title=dict(text="Intercept Trajectory",
+        font=dict(color=CHART_TITLE, family='Archivo', size=14)),
+        xaxis_title="Range (km)", yaxis_title="Altitude (km)")
+    plotly_layout(fig_int, height=450)
+    st.plotly_chart(fig_int, use_container_width=True)
+
+    with st.expander("Proportional navigation explained"):
+        st.markdown("The missile measures the angle to the target (line of sight). If the angle is changing, the missile turns proportionally to kill that rotation. When the angle stops changing, the missile is on a collision course. This is mathematically proven to be the optimal guidance law for constant-speed engagements.")
+
+    st.markdown(f"""
+    <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+      <div class="hud-metric"><span class="value">{t_intercept:.1f}s</span><span class="label">Time to Intercept</span></div>
+      <div class="hud-metric"><span class="value">{akash_speed:.0f} m/s</span><span class="label">Missile Speed</span></div>
+      <div class="hud-metric"><span class="value">{target_speed:.0f} m/s</span><span class="label">Target Speed</span></div>
+      <div class="hud-metric"><span class="value">{intercept_x:.1f} km</span><span class="label">Intercept Range</span></div>
+      <div class="hud-metric"><span class="value">{intercept_y:.1f} km</span><span class="label">Intercept Alt</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown('<p class="section-header">Kill Envelope</p>', unsafe_allow_html=True)
+    env_ranges = np.linspace(0, 35, 200)
+    max_alt_env = np.zeros_like(env_ranges)
+    min_alt_env = np.zeros_like(env_ranges)
+    for i, r in enumerate(env_ranges):
+        if r <= 30:
+            max_alt_env[i] = 20 * np.sqrt(1 - (max(r - 5, 0) / 25)**2) if r <= 30 else 0
+            min_alt_env[i] = 0.05 if r <= 25 else 0.05 + (r - 25) * 0.4
+        else:
+            max_alt_env[i] = 0
+            min_alt_env[i] = 0
+    valid = max_alt_env > min_alt_env
+    fig_env = go.Figure()
+    fig_env.add_trace(go.Scatter(x=env_ranges[valid], y=max_alt_env[valid], mode='lines',
+        line=dict(color=GREEN, width=2), name='Max Altitude'))
+    fig_env.add_trace(go.Scatter(x=env_ranges[valid], y=min_alt_env[valid], mode='lines',
+        line=dict(color=GREEN, width=2), fill='tonexty', fillcolor='rgba(74,222,128,0.1)', name='Min Altitude'))
+    in_envelope = target_range_km <= 30 and target_alt_km <= 20
+    marker_color = GREEN if in_envelope else RED
+    fig_env.add_trace(go.Scatter(x=[target_range_km], y=[target_alt_km], mode='markers+text',
+        marker=dict(size=14, color=marker_color, symbol='x'),
+        text=['TARGET'], textposition='top right',
+        textfont=dict(color=marker_color, size=11, family='Archivo'), showlegend=False))
+    fig_env.update_layout(title=dict(text="Akash Kill Envelope",
+        font=dict(color=CHART_TITLE, family='Archivo', size=14)),
+        xaxis_title="Range (km)", yaxis_title="Altitude (km)")
+    plotly_layout(fig_env, height=400)
+    st.plotly_chart(fig_env, use_container_width=True)
+    env_status = "INSIDE KILL ZONE" if in_envelope else "OUTSIDE ENVELOPE"
+    env_class = "alert-boom" if in_envelope else "alert-normal"
+    st.markdown(f'<div class="alert-box {env_class}">Target is <b>{env_status}</b> at {target_range_km} km range, {target_alt_km} km altitude</div>', unsafe_allow_html=True)
+    with st.expander("What is a kill envelope?"):
+        st.markdown("The green zone is where Akash can successfully intercept a target. Outside it: too far, too high, too low, or too fast. The envelope shape comes from the missile's speed, fuel, and manoeuvrability limits. Moving the target sliders shows whether a given threat is engageable.")
+
+
+# ================================================================
+# GAGANYAAN RE-ENTRY
+# ================================================================
+elif page == "Gaganyaan Re-entry":
+    st.sidebar.markdown('<p class="section-header">Gaganyaan Controls</p>', unsafe_allow_html=True)
+    entry_angle = st.sidebar.slider("Entry Angle (degrees)", -2.0, -8.0, -5.5, 0.1,
+        help="Steeper = higher G-force and heating. Shallower = risk of skip-off.")
+    orbit_alt = st.sidebar.slider("Orbit Altitude (km)", 300, 500, 400, 10,
+        help="Gaganyaan target orbit: 400 km LEO")
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown('<p class="section-header">Gaganyaan Specs</p>', unsafe_allow_html=True)
+    st.sidebar.markdown("""
+    <div class="specs-grid">
+      <div class="spec-item"><span class="spec-val">3 crew</span><span class="spec-label">Capacity</span></div>
+      <div class="spec-item"><span class="spec-val">8,200 kg</span><span class="spec-label">Module Mass</span></div>
+      <div class="spec-item"><span class="spec-val">LVM3</span><span class="spec-label">Launch Vehicle</span></div>
+      <div class="spec-item"><span class="spec-val">400 km</span><span class="spec-label">Target Orbit</span></div>
+      <div class="spec-item"><span class="spec-val">7 days</span><span class="spec-label">Mission Duration</span></div>
+      <div class="spec-item"><span class="spec-val">ISRO</span><span class="spec-label">Developer</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<p class="section-header">Gaganyaan — India\'s Human Spaceflight Programme</p>', unsafe_allow_html=True)
+    with st.expander("About Gaganyaan"):
+        st.markdown("India's first crewed spacecraft. The Crew Module is designed to carry 3 astronauts (called Vyomanauts) to low Earth orbit. The most critical phase is re-entry: the capsule hits the atmosphere at 7.8 km/s (28,000 km/h) and must decelerate to parachute speed without exceeding 4G or letting the heat shield temperature breach limits. Two uncrewed test flights (TV-D1 in Oct 2023 successfully tested the crew escape system) precede the crewed mission.")
+
+    MU_E = 3.986e14
+    R_E = 6.371e6
+    v_orbit = np.sqrt(MU_E / (R_E + orbit_alt * 1000))
+    v_entry = v_orbit * 0.99
+
+    dt = 0.5
+    alt, vel, gamma = orbit_alt * 1000, v_entry, np.radians(entry_angle)
+    mass, cd, area, cl = 5000, 1.2, 5.0, 0.3
+    nose_r = 1.0
+    t_log, alt_log, vel_log, g_log, heat_log, temp_log, mach_log = [0], [alt/1000], [vel], [0], [0], [300], [vel/340]
+    drogue_deployed, main_deployed = False, False
+    drogue_t, main_t = None, None
+    t = 0
+    while alt > 0 and t < 2000:
+        t += dt
+        _, _, rho, a = isa_atmosphere(min(max(alt, 0), 20000)) if alt < 85000 else (200, 0.01, 1.225 * np.exp(-alt / 8500), 295)
+        if alt >= 85000:
+            rho = 1.225 * np.exp(-alt / 8500)
+        q = 0.5 * rho * vel**2
+        drag = q * cd * area
+        lift = q * cl * area
+        g_local = 9.81 * (R_E / (R_E + alt))**2
+        if not drogue_deployed and alt < 15000 and vel < 200:
+            drogue_deployed = True
+            drogue_t = t
+            cd = 2.5
+            area = 15.0
+            cl = 0
+        if not main_deployed and alt < 5000 and vel < 80:
+            main_deployed = True
+            main_t = t
+            cd = 3.5
+            area = 50.0
+        ax = -drag / mass - g_local * np.sin(gamma)
+        ay = lift / mass - g_local * np.cos(gamma) + vel * np.cos(gamma) * vel / (R_E + alt)
+        vel = max(vel + ax * dt, 0)
+        if vel > 0:
+            gamma = gamma + (ay / vel) * dt
+        alt = alt + vel * np.sin(gamma) * dt
+        g_force = abs(ax / 9.81)
+        heat_flux = 1.83e-4 * np.sqrt(rho / nose_r) * vel**3 / 1e6
+        stag_temp = 300 + heat_flux * 200
+        t_log.append(t)
+        alt_log.append(max(alt / 1000, 0))
+        vel_log.append(vel)
+        g_log.append(g_force)
+        heat_log.append(heat_flux)
+        temp_log.append(min(stag_temp, 3500))
+        mach_log.append(vel / max(a, 295))
+        if alt <= 0:
+            break
+
+    st.markdown(f'<div class="alert-box alert-boom">Entry velocity: <b>{v_entry:.0f} m/s</b> ({v_entry*3.6:.0f} km/h) at {entry_angle}° angle. The capsule must shed 99.9% of its kinetic energy as heat before parachute deployment.</div>', unsafe_allow_html=True)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        fig_alt = go.Figure()
+        fig_alt.add_trace(go.Scatter(x=t_log, y=alt_log, mode='lines',
+            line=dict(color=ACCENT, width=3), name='Altitude'))
+        if drogue_t:
+            fig_alt.add_vline(x=drogue_t, line_dash="dot", line_color="rgba(74,222,128,0.4)")
+            fig_alt.add_annotation(x=drogue_t, y=15, text="Drogue",
+                font=dict(color=GREEN, size=9, family='Rajdhani'), showarrow=True, arrowcolor=GREEN)
+        if main_t:
+            fig_alt.add_vline(x=main_t, line_dash="dot", line_color="rgba(96,165,250,0.4)")
+            fig_alt.add_annotation(x=main_t, y=5, text="Main Chute",
+                font=dict(color='#60a5fa', size=9, family='Rajdhani'), showarrow=True, arrowcolor='#60a5fa')
+        fig_alt.update_layout(title=dict(text="Re-entry Altitude Profile",
+            font=dict(color=CHART_TITLE, family='Archivo', size=12)),
+            xaxis_title="Time (s)", yaxis_title="Altitude (km)")
+        plotly_layout(fig_alt, height=380)
+        st.plotly_chart(fig_alt, use_container_width=True)
+
+    with c2:
+        fig_vel2 = go.Figure()
+        fig_vel2.add_trace(go.Scatter(x=t_log, y=[v/1000 for v in vel_log], mode='lines',
+            line=dict(color=RED, width=3), name='Velocity'))
+        fig_vel2.update_layout(title=dict(text="Velocity During Re-entry",
+            font=dict(color=CHART_TITLE, family='Archivo', size=12)),
+            xaxis_title="Time (s)", yaxis_title="Velocity (km/s)")
+        plotly_layout(fig_vel2, height=380)
+        st.plotly_chart(fig_vel2, use_container_width=True)
+
+    with st.expander("Why is re-entry so dangerous?"):
+        st.markdown(f"At {v_entry:.0f} m/s, the capsule has kinetic energy equivalent to roughly {0.5 * mass * v_entry**2 / 4.184e9:.0f} tonnes of TNT. All of this must be converted to heat by air friction. The heat shield ablates (burns away in a controlled manner), carrying heat away from the capsule. If the entry angle is too steep, G-forces could injure the crew. Too shallow, and the capsule bounces off the atmosphere like a stone skipping on water.")
+
+    st.markdown("---")
+    c3, c4 = st.columns(2)
+    with c3:
+        st.markdown('<p class="section-header">G-Force on Crew</p>', unsafe_allow_html=True)
+        fig_gf = go.Figure()
+        fig_gf.add_trace(go.Scatter(x=t_log, y=g_log, mode='lines',
+            line=dict(color=YELLOW, width=2.5), name='G-force'))
+        fig_gf.add_hline(y=4, line_dash="dash", line_color="rgba(239,68,68,0.4)",
+            annotation_text="Crew limit ~4G", annotation_font=dict(color=RED, size=9))
+        fig_gf.update_layout(title=dict(text="G-Force Profile",
+            font=dict(color=CHART_TITLE, family='Archivo', size=12)),
+            xaxis_title="Time (s)", yaxis_title="G-force")
+        plotly_layout(fig_gf, height=380)
+        st.plotly_chart(fig_gf, use_container_width=True)
+        with st.expander("About G-force during re-entry"):
+            st.markdown(f"Peak G-force: **{max(g_log):.1f}G**. Gaganyaan is designed for max 4G. Apollo astronauts experienced up to 6.5G. The entry angle directly controls peak G: steeper = higher G but shorter duration. Try adjusting the angle slider to see the tradeoff.")
+
+    with c4:
+        st.markdown('<p class="section-header">Heat Shield Temperature</p>', unsafe_allow_html=True)
+        fig_temp = go.Figure()
+        fig_temp.add_trace(go.Scatter(x=t_log, y=temp_log, mode='lines',
+            line=dict(color=RED, width=2.5), name='Stagnation Temp'))
+        fig_temp.add_hline(y=2000, line_dash="dash", line_color="rgba(255,153,51,0.4)",
+            annotation_text="Carbon phenolic limit ~2000°C", annotation_font=dict(color=ACCENT, size=9))
+        fig_temp.update_layout(title=dict(text="Stagnation Point Temperature",
+            font=dict(color=CHART_TITLE, family='Archivo', size=12)),
+            xaxis_title="Time (s)", yaxis_title="Temperature (°C)")
+        plotly_layout(fig_temp, height=380)
+        st.plotly_chart(fig_temp, use_container_width=True)
+        with st.expander("About heat shield temperature"):
+            st.markdown(f"Peak temperature: **{max(temp_log):.0f}°C**. The Gaganyaan heat shield uses carbon-phenolic ablative material that can withstand up to ~2000°C. The surface material chars and vaporises, carrying heat away. The stagnation point (very tip of the shield) gets hottest because air compresses there the most.")
+
+    peak_g = max(g_log)
+    peak_temp = max(temp_log)
+    peak_heat = max(heat_log)
+    landing_vel = vel_log[-1]
+    total_time = t_log[-1]
+    st.markdown(f"""
+    <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+      <div class="hud-metric"><span class="value">{v_entry:.0f} m/s</span><span class="label">Entry Velocity</span></div>
+      <div class="hud-metric"><span class="value">{peak_g:.1f}G</span><span class="label">Peak G-Force</span></div>
+      <div class="hud-metric"><span class="value">{peak_temp:.0f}°C</span><span class="label">Peak Temp</span></div>
+      <div class="hud-metric"><span class="value">{peak_heat:.1f} MW/m²</span><span class="label">Peak Heat Flux</span></div>
+      <div class="hud-metric"><span class="value">{landing_vel:.1f} m/s</span><span class="label">Landing Speed</span></div>
+      <div class="hud-metric"><span class="value">{total_time:.0f}s</span><span class="label">Total Time</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ================================================================
+# COMPARE PLATFORMS
+# ================================================================
+elif page == "Compare Platforms":
+    st.markdown('<p class="section-header">Compare Platforms</p>', unsafe_allow_html=True)
+    st.markdown('<div class="alert-box alert-info">Select two platforms to compare their key specifications and performance side by side.</div>', unsafe_allow_html=True)
+
+    platform_specs = {
+        "HAL Tejas Mk1A": {"type": "Fighter", "speed_ms": 1.8*340, "range_km": 3000, "mass_kg": 9800, "ceiling_km": 16.5, "thrust_kn": 89, "origin": "HAL/ADA"},
+        "BrahMos Block III": {"type": "Cruise Missile", "speed_ms": 2.8*340, "range_km": 450, "mass_kg": 3000, "ceiling_km": 15, "thrust_kn": 0, "origin": "BrahMos Aerospace"},
+        "AMCA": {"type": "Stealth Fighter", "speed_ms": 1.8*340, "range_km": 3500, "mass_kg": 25000, "ceiling_km": 20, "thrust_kn": 200, "origin": "HAL/ADA"},
+        "Akash": {"type": "SAM", "speed_ms": 2.5*340, "range_km": 30, "mass_kg": 720, "ceiling_km": 20, "thrust_kn": 0, "origin": "DRDO"},
+        "PSLV-XL": {"type": "Launch Vehicle", "speed_ms": 7800, "range_km": 0, "mass_kg": 320000, "ceiling_km": 600, "thrust_kn": 4846, "origin": "ISRO"},
+        "GSLV Mk III": {"type": "Heavy Lift LV", "speed_ms": 7900, "range_km": 0, "mass_kg": 640000, "ceiling_km": 600, "thrust_kn": 5150, "origin": "ISRO"},
+        "Agnibaan": {"type": "Small Sat LV", "speed_ms": 7500, "range_km": 0, "mass_kg": 14000, "ceiling_km": 700, "thrust_kn": 120, "origin": "Agnikul Cosmos"},
+        "Vikram-1": {"type": "Small Sat LV", "speed_ms": 7600, "range_km": 0, "mass_kg": 55000, "ceiling_km": 500, "thrust_kn": 1000, "origin": "Skyroot"},
+    }
+    names_list = list(platform_specs.keys())
+    cc1, cc2 = st.columns(2)
+    with cc1:
+        p1 = st.selectbox("Platform 1", names_list, index=0)
+    with cc2:
+        p2 = st.selectbox("Platform 2", names_list, index=4)
+
+    s1, s2 = platform_specs[p1], platform_specs[p2]
+
+    st.markdown(f"""
+    <div class="hud-card">
+      <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:10px; font-family:Rajdhani,sans-serif;">
+        <div style="text-align:center;"><span style="font-family:Archivo; color:{ACCENT}; font-weight:800; font-size:1.1rem;">{p1}</span><br><span style="color:{MUTED}; font-size:0.8rem;">{s1['type']} | {s1['origin']}</span></div>
+        <div style="text-align:center; color:{MUTED}; font-size:1.5rem; padding-top:5px;">vs</div>
+        <div style="text-align:center;"><span style="font-family:Archivo; color:{GREEN}; font-weight:800; font-size:1.1rem;">{p2}</span><br><span style="color:{MUTED}; font-size:0.8rem;">{s2['type']} | {s2['origin']}</span></div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    metrics = [
+        ("Max Speed (m/s)", "speed_ms"), ("Mass (kg)", "mass_kg"),
+        ("Max Alt/Ceiling (km)", "ceiling_km"), ("Thrust (kN)", "thrust_kn"),
+    ]
+    fig_comp = go.Figure()
+    metric_names = [m[0] for m in metrics]
+    vals1 = [s1[m[1]] for m in metrics]
+    vals2 = [s2[m[1]] for m in metrics]
+    max_vals = [max(v1, v2, 1) for v1, v2 in zip(vals1, vals2)]
+    norm1 = [v / m * 100 for v, m in zip(vals1, max_vals)]
+    norm2 = [v / m * 100 for v, m in zip(vals2, max_vals)]
+    fig_comp.add_trace(go.Bar(y=metric_names, x=norm1, orientation='h', name=p1,
+        marker=dict(color=ACCENT), text=[f'{v:,.0f}' for v in vals1],
+        textposition='inside', textfont=dict(color='white', size=12, family='JetBrains Mono')))
+    fig_comp.add_trace(go.Bar(y=metric_names, x=[-n for n in norm2], orientation='h', name=p2,
+        marker=dict(color=GREEN), text=[f'{v:,.0f}' for v in vals2],
+        textposition='inside', textfont=dict(color='white', size=12, family='JetBrains Mono')))
+    fig_comp.update_layout(barmode='overlay',
+        xaxis=dict(showticklabels=False, zeroline=True, zerolinecolor='rgba(255,255,255,0.2)'),
+        yaxis=dict(autorange='reversed'),
+        title=dict(text="Head to Head Comparison", font=dict(color=CHART_TITLE, family='Archivo', size=14)),
+        legend=dict(font=dict(color=MUTED)))
+    plotly_layout(fig_comp, height=400)
+    fig_comp.update_layout(margin=dict(l=160))
+    st.plotly_chart(fig_comp, use_container_width=True)
+
+    st.markdown("---")
+    st.markdown('<p class="section-header">Speed Comparison</p>', unsafe_allow_html=True)
+    all_names = names_list
+    all_speeds = [platform_specs[n]['speed_ms'] for n in all_names]
+    speed_colors = [ACCENT if n == p1 else GREEN if n == p2 else 'rgba(255,255,255,0.15)' for n in all_names]
+    fig_speed = go.Figure()
+    fig_speed.add_trace(go.Bar(x=all_names, y=all_speeds, marker=dict(color=speed_colors),
+        text=[f'{v:,.0f}' for v in all_speeds], textposition='outside',
+        textfont=dict(color=TEXT, size=10, family='JetBrains Mono')))
+    fig_speed.update_layout(title=dict(text="Max Speed Across All Platforms (m/s)",
+        font=dict(color=CHART_TITLE, family='Archivo', size=13)),
+        yaxis_title="Speed (m/s)", xaxis=dict(tickangle=-30))
+    plotly_layout(fig_speed, height=400)
+    st.plotly_chart(fig_speed, use_container_width=True)
+
+
+# ================================================================
+# SATELLITE ORBIT VISUALIZER
+# ================================================================
+elif page == "Satellite Orbit Visualizer":
+    st.sidebar.markdown('<p class="section-header">Orbit Parameters</p>', unsafe_allow_html=True)
+    sat_alt = st.sidebar.slider("Altitude (km)", 200, 36000, 600, 50,
+        help="LEO: 200-2000 km, MEO: 2000-35786 km, GEO: 35,786 km")
+    inclination = st.sidebar.slider("Inclination (degrees)", 0, 98, 28, 1,
+        help="0° = equatorial, 90° = polar, 97-98° = sun-synchronous")
+
+    MU_E = 3.986e14
+    R_E = 6371
+    r_orbit = (R_E + sat_alt) * 1000
+    v_orbital = np.sqrt(MU_E / r_orbit)
+    period = 2 * np.pi * np.sqrt(r_orbit**3 / MU_E)
+    period_min = period / 60
+
+    orbit_type = "LEO" if sat_alt < 2000 else "MEO" if sat_alt < 35000 else "GEO"
+    if inclination >= 96 and inclination <= 99 and sat_alt < 1000:
+        orbit_type = "Sun-Synchronous"
+    elif abs(sat_alt - 35786) < 500 and inclination < 5:
+        orbit_type = "Geostationary"
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown(f"""
+    <div class="specs-grid">
+      <div class="spec-item"><span class="spec-val">{orbit_type}</span><span class="spec-label">Orbit Type</span></div>
+      <div class="spec-item"><span class="spec-val">{v_orbital:.0f} m/s</span><span class="spec-label">Velocity</span></div>
+      <div class="spec-item"><span class="spec-val">{period_min:.1f} min</span><span class="spec-label">Period</span></div>
+      <div class="spec-item"><span class="spec-val">{sat_alt} km</span><span class="spec-label">Altitude</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<p class="section-header">Satellite Orbit Visualizer</p>', unsafe_allow_html=True)
+    with st.expander("About orbital mechanics"):
+        st.markdown("Every satellite follows Kepler's laws: its speed and period depend only on altitude. Lower = faster. At 35,786 km (GEO), the period is exactly 24 hours, so the satellite appears stationary over one spot. Most Earth observation satellites orbit at 400-800 km in sun-synchronous orbits to image the same spot at the same local time each day.")
+
+    st.markdown(f"""
+    <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+      <div class="hud-metric"><span class="value">{orbit_type}</span><span class="label">Classification</span></div>
+      <div class="hud-metric"><span class="value">{v_orbital:.0f} m/s</span><span class="label">Orbital Velocity</span></div>
+      <div class="hud-metric"><span class="value">{v_orbital*3.6:.0f} km/h</span><span class="label">Speed</span></div>
+      <div class="hud-metric"><span class="value">{period_min:.1f} min</span><span class="label">Orbital Period</span></div>
+      <div class="hud-metric"><span class="value">{24*60/period_min:.1f}</span><span class="label">Orbits per Day</span></div>
+      <div class="hud-metric"><span class="value">{inclination}°</span><span class="label">Inclination</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('<p class="section-header">Ground Track</p>', unsafe_allow_html=True)
+        n_orbits = min(3, max(1, int(24 * 60 / period_min)))
+        t_track = np.linspace(0, n_orbits * period, 2000)
+        omega_e = 2 * np.pi / 86400
+        inc_rad = np.radians(inclination)
+        lats = np.degrees(np.arcsin(np.sin(inc_rad) * np.sin(2 * np.pi * t_track / period)))
+        lons = np.degrees(np.arctan2(np.sin(2 * np.pi * t_track / period) * np.cos(inc_rad),
+                np.cos(2 * np.pi * t_track / period))) - np.degrees(omega_e * t_track)
+        lons = ((lons + 180) % 360) - 180
+
+        fig_gt = go.Figure()
+        seg_lon, seg_lat = [lons[0]], [lats[0]]
+        for i in range(1, len(lons)):
+            if abs(lons[i] - lons[i-1]) > 180:
+                fig_gt.add_trace(go.Scatter(x=seg_lon, y=seg_lat, mode='lines',
+                    line=dict(color=ACCENT, width=2), showlegend=False))
+                seg_lon, seg_lat = [], []
+            seg_lon.append(lons[i])
+            seg_lat.append(lats[i])
+        if seg_lon:
+            fig_gt.add_trace(go.Scatter(x=seg_lon, y=seg_lat, mode='lines',
+                line=dict(color=ACCENT, width=2), showlegend=False))
+        fig_gt.add_trace(go.Scatter(x=[lons[0]], y=[lats[0]], mode='markers',
+            marker=dict(size=10, color=GREEN, symbol='star'), name='Start'))
+        fig_gt.add_hline(y=0, line_dash="dot", line_color="rgba(255,255,255,0.1)")
+        fig_gt.update_layout(
+            title=dict(text=f"Ground Track ({n_orbits} orbit{'s' if n_orbits > 1 else ''})",
+                font=dict(color=CHART_TITLE, family='Archivo', size=13)),
+            xaxis=dict(title="Longitude (°)", range=[-180, 180]),
+            yaxis=dict(title="Latitude (°)", range=[-90, 90], scaleanchor='x'))
+        plotly_layout(fig_gt, height=450)
+        st.plotly_chart(fig_gt, use_container_width=True)
+        with st.expander("Reading the ground track"):
+            st.markdown(f"The sinusoidal pattern comes from the satellite's inclined orbit projected onto a flat map. The maximum latitude reached = inclination ({inclination}°). Earth rotates underneath, so each pass shifts westward. GEO satellites trace a single dot since they match Earth's rotation.")
+
+    with col2:
+        st.markdown('<p class="section-header">Orbit Altitude Context</p>', unsafe_allow_html=True)
+        ref_orbits = [
+            ("ISS", 408), ("Hubble", 540), ("Starlink", 550),
+            ("IRNSS", 36000), ("GPS", 20200), ("GEO", 35786),
+        ]
+        ref_names = [r[0] for r in ref_orbits] + ["Your Satellite"]
+        ref_alts = [r[1] for r in ref_orbits] + [sat_alt]
+        ref_colors = ['rgba(255,255,255,0.2)'] * len(ref_orbits) + [ACCENT]
+        fig_ctx = go.Figure()
+        fig_ctx.add_trace(go.Bar(x=ref_names, y=ref_alts, marker=dict(color=ref_colors),
+            text=[f'{a:,} km' for a in ref_alts], textposition='outside',
+            textfont=dict(color=TEXT, size=10, family='JetBrains Mono')))
+        fig_ctx.update_layout(title=dict(text="Altitude Comparison",
+            font=dict(color=CHART_TITLE, family='Archivo', size=13)),
+            yaxis=dict(type='log', title='Altitude (km, log)'), xaxis=dict(tickangle=-30))
+        plotly_layout(fig_ctx, height=450)
+        st.plotly_chart(fig_ctx, use_container_width=True)
+
+    st.markdown("---")
+    st.markdown('<p class="section-header">Indian Satellite Orbits</p>', unsafe_allow_html=True)
+    indian_sats = [
+        {"name": "Cartosat-3", "alt": 509, "inc": 97.5, "purpose": "Earth imaging (0.25m resolution)"},
+        {"name": "RISAT-2BR1", "alt": 576, "inc": 37, "purpose": "Radar imaging (all-weather)"},
+        {"name": "Oceansat-3", "alt": 742, "inc": 98.3, "purpose": "Ocean/weather monitoring"},
+        {"name": "GSAT-30", "alt": 35786, "inc": 0, "purpose": "Telecommunications"},
+        {"name": "NavIC (IRNSS)", "alt": 36000, "inc": 29, "purpose": "Regional navigation"},
+        {"name": "Aditya-L1", "alt": 1500000, "inc": 0, "purpose": "Solar observation (L1 point)"},
+    ]
+    cols = st.columns(3)
+    for i, sat in enumerate(indian_sats):
+        with cols[i % 3]:
+            st.markdown(f"""
+            <div class="spec-item" style="padding:12px; margin:4px 0;">
+                <span class="spec-val" style="font-size:0.85rem;">{sat['name']}</span>
+                <span class="spec-label">{sat['alt']:,} km | {sat['inc']}° | {sat['purpose']}</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+
+# ================================================================
+# QUIZ
+# ================================================================
+elif page == "Quiz":
+    st.markdown('<p class="section-header">Test Your Knowledge</p>', unsafe_allow_html=True)
+    st.markdown('<div class="alert-box alert-info">10 questions covering the physics behind every platform in VAJRA. Pick your answer, then expand "Show Answer" to check.</div>', unsafe_allow_html=True)
+
+    quiz_data = [
+        {"q": "At Mach 1.5, what is the Mach cone half-angle?",
+         "opts": ["30°", "41.8°", "60°", "90°"],
+         "ans": 1, "explain": "Half-angle = arcsin(1/M) = arcsin(1/1.5) = 41.8°. The faster you go, the narrower the cone."},
+        {"q": "Why does drag spike near Mach 1 (the sound barrier)?",
+         "opts": ["Engine loses power", "Air can't move out of the way fast enough, creating shockwaves", "Wings lose lift", "Gravity increases"],
+         "ans": 1, "explain": "Near Mach 1, air ahead can't 'warn' air further ahead to move aside. This creates shockwaves and wave drag, a massive spike in resistance called the transonic drag rise."},
+        {"q": "What does Isp (specific impulse) measure?",
+         "opts": ["Engine temperature", "Fuel efficiency — seconds of thrust per kg of fuel", "Maximum speed", "Engine weight"],
+         "ans": 1, "explain": "Isp tells you how many seconds one kg of propellant can produce one kg of thrust. Higher Isp = more efficient. Cryogenic engines (Isp ~440s) are nearly 2x more efficient than solid motors (~270s)."},
+        {"q": "Why does ISRO raise Chandrayaan's orbit gradually instead of flying directly to the Moon?",
+         "opts": ["The rocket isn't powerful enough", "Gradual burns at perigee are more fuel-efficient than one large burn", "To take photos of Earth", "To test the engines"],
+         "ans": 1, "explain": "Burning at perigee (closest point) gives the most efficient orbit change (Oberth effect). Small burns at perigee stretch the apogee further each time, requiring less total fuel than a single direct injection."},
+        {"q": "What makes BrahMos nearly impossible to intercept?",
+         "opts": ["It's invisible to radar", "Mach 2.8 speed + sea-skimming at 10m altitude gives defenders only seconds to react", "It flies too high", "It changes direction randomly"],
+         "ans": 1, "explain": "At Mach 2.8 and 10m above sea level, BrahMos hugs the radar horizon. A ship's defence system gets only a few seconds from detection to impact — not enough time for most countermeasures."},
+        {"q": "What is special about Agnikul's Agnilet engine?",
+         "opts": ["It uses nuclear fuel", "It's the world's first single-piece 3D-printed rocket engine", "It's reusable 100 times", "It runs on hydrogen"],
+         "ans": 1, "explain": "Traditional engines have 100+ parts welded together. Agnilet is 3D-printed as one piece of metal — fewer failure points, faster manufacturing, and lower cost."},
+        {"q": "In the vis-viva equation v = sqrt(GM(2/r - 1/a)), what happens to velocity as r decreases?",
+         "opts": ["Velocity decreases", "Velocity increases", "Velocity stays constant", "The satellite falls"],
+         "ans": 1, "explain": "As r (distance from the central body) decreases, 2/r increases, making v larger. This is why satellites move fastest at their closest approach (perigee/periselene) — Kepler's second law."},
+        {"q": "Why does the Gaganyaan capsule need a heat shield for re-entry?",
+         "opts": ["Space is cold", "The capsule hits atmosphere at 7.8 km/s, compressing air to ~2000°C", "To protect from radiation", "To keep the interior pressurised"],
+         "ans": 1, "explain": "At 7.8 km/s (28,000 km/h), air in front of the capsule can't move aside and gets compressed violently. This compression heats the air to ~2000°C. The ablative heat shield chars and vaporises, carrying heat away."},
+        {"q": "How does stealth (low RCS) affect radar detection range?",
+         "opts": ["Detection range halves with halved RCS", "Detection range scales with the 4th root of RCS, so 16x smaller RCS = half the range", "RCS doesn't affect range", "Lower RCS increases range"],
+         "ans": 1, "explain": "The radar equation: range scales with RCS^(1/4). To halve detection distance, you need to reduce RCS by 2^4 = 16 times. AMCA's ~0.1 m² vs Tejas's ~1.5 m² means significantly reduced detection range."},
+        {"q": "What orbit altitude gives a 24-hour period (geostationary)?",
+         "opts": ["400 km", "2,000 km", "20,200 km", "35,786 km"],
+         "ans": 3, "explain": "At 35,786 km, the orbital period equals Earth's rotation (24 hours). The satellite appears stationary over one point. India's GSAT communication satellites and NavIC navigation satellites use this orbit."},
+    ]
+
+    if 'quiz_answers' not in st.session_state:
+        st.session_state.quiz_answers = {}
+
+    score = 0
+    for i, qd in enumerate(quiz_data):
+        st.markdown(f'<div class="hud-card"><p style="font-family:Archivo,sans-serif; color:{TEXT}; font-weight:700; margin-bottom:10px;">Q{i+1}. {qd["q"]}</p></div>', unsafe_allow_html=True)
+        key = f"quiz_{i}"
+        answer = st.radio(f"Q{i+1}", qd["opts"], key=key, label_visibility="collapsed")
+        selected_idx = qd["opts"].index(answer)
+        with st.expander("Show Answer"):
+            if selected_idx == qd["ans"]:
+                st.markdown(f'<span style="color:{GREEN}; font-family:Archivo; font-weight:700;">CORRECT!</span>', unsafe_allow_html=True)
+                score += 1
+            else:
+                st.markdown(f'<span style="color:{RED}; font-family:Archivo; font-weight:700;">INCORRECT</span> — Answer: **{qd["opts"][qd["ans"]]}**', unsafe_allow_html=True)
+            st.markdown(qd["explain"])
+
+    st.markdown("---")
+    pct = score / len(quiz_data) * 100
+    grade_color = GREEN if pct >= 70 else YELLOW if pct >= 40 else RED
+    st.markdown(f"""
+    <div class="hud-card" style="text-align:center; padding:25px;">
+      <span style="font-family:JetBrains Mono; font-size:2.5rem; font-weight:700; color:{grade_color};">{score}/{len(quiz_data)}</span><br>
+      <span style="font-family:Rajdhani,sans-serif; font-size:1.1rem; color:{MUTED}; letter-spacing:2px; text-transform:uppercase;">
+      {'Mission Specialist' if pct >= 90 else 'Flight Engineer' if pct >= 70 else 'Cadet' if pct >= 40 else 'Ground Crew'}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ================================================================
 # ABOUT
 # ================================================================
 elif page == "About VAJRA":
@@ -1058,8 +1735,20 @@ elif page == "About VAJRA":
             <span class="spec-label">ISRO — Heavy Lift Rocket</span>
           </div>
           <div class="spec-item" style="padding:15px;">
+            <span class="spec-val" style="font-size:0.85rem;">AMCA</span>
+            <span class="spec-label">Defence — Stealth Fighter</span>
+          </div>
+          <div class="spec-item" style="padding:15px;">
+            <span class="spec-val" style="font-size:0.85rem;">AKASH</span>
+            <span class="spec-label">Defence — Surface to Air Missile</span>
+          </div>
+          <div class="spec-item" style="padding:15px;">
             <span class="spec-val" style="font-size:0.85rem;">CHANDRAYAAN 3</span>
             <span class="spec-label">ISRO — Lunar Landing Mission</span>
+          </div>
+          <div class="spec-item" style="padding:15px;">
+            <span class="spec-val" style="font-size:0.85rem;">GAGANYAAN</span>
+            <span class="spec-label">ISRO — Human Spaceflight</span>
           </div>
           <div class="spec-item" style="padding:15px;">
             <span class="spec-val" style="font-size:0.85rem;">AGNIKUL AGNIBAAN</span>
@@ -1085,7 +1774,13 @@ elif page == "About VAJRA":
         Gravity-turn trajectory approximation<br>
         Prandtl-Glauert compressibility correction<br>
         Vis-viva equation for orbital velocity<br>
-        Keplerian orbit geometry (elliptical transfer)
+        Keplerian orbit geometry (elliptical transfer)<br>
+        Radar equation for detection range<br>
+        Radar cross section angular patterns<br>
+        Proportional navigation guidance law<br>
+        Sutton-Graves re-entry heating model<br>
+        Atmospheric drag deceleration<br>
+        Satellite ground track projection
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1093,10 +1788,7 @@ elif page == "About VAJRA":
     <div class="hud-card">
         <h3 style="font-family:Archivo,sans-serif; color:{ACCENT}; font-weight:800; letter-spacing:1px; margin-top:0;">COMING SOON</h3>
         <div style="font-family:Rajdhani,sans-serif; color:#c0cfe0; font-size:1rem; line-height:2;">
-        Gaganyaan re-entry heat shield analysis<br>
-        AMCA stealth aircraft profile<br>
-        Akash missile intercept trajectory<br>
-        Live ISRO satellite tracking<br>
+        Live ISRO satellite tracking (real-time TLE data)<br>
         Tejas Mk1A spotting log + community map<br>
         Mobile app (Play Store / App Store)
         </div>
@@ -1109,7 +1801,7 @@ st.markdown("---")
 st.markdown(f"""
 <div style="text-align:center; padding:15px;">
     <p style="font-family:'Archivo',sans-serif; color:rgba(240,244,248,0.3); font-size:0.7rem; letter-spacing:3px; font-weight:700;">
-    VAJRA v6.0 — BUILT BY ATHARV SHUKLA</p>
+    VAJRA v7.0 — BUILT BY ATHARV SHUKLA</p>
     <p style="font-family:'Rajdhani',sans-serif; color:rgba(122,139,164,0.3); font-size:0.7rem; letter-spacing:2px;">
     AMITY INTERNATIONAL SCHOOL SEC 46 GURGAON | INDIAN AEROSPACE SIMULATOR</p>
 </div>
