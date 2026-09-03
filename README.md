@@ -1,37 +1,68 @@
-# HAL Tejas Sonic Boom Simulator - VAJRA
+# VAJRA — Indian Aerospace Physics Simulator
 
-A real-time interactive supersonic flight physics simulator built for the HAL Tejas Mk1A fighter jet.
+An interactive real-time physics simulator showcasing India's indigenous aerospace capabilities. Built with real engineering parameters across 10 platforms, 3 exploration tools, and a quiz.
 
-## What it does
-- Simulates the four forces of flight (Lift, Weight, Thrust, Drag) with a real-time force balance diagram
-- Visualises shockwave (Mach) cone formation when the aircraft breaks the sound barrier
-- Models sonic boom N-wave pressure distribution around the aircraft
-- Calculates speed of sound at any altitude using ISA atmospheric data (troposphere + stratosphere)
-- Detects subsonic, transonic and supersonic flight regimes
-- Shows the HAL Tejas Mk1A performance envelope with current flight state
-- Displays dynamic pressure, air density, and aerodynamic force metrics
+**Live app:** [vajra-hal-tejas.streamlit.app](https://vajra-hal-tejas.streamlit.app)
 
-## Physics behind it
-- **International Standard Atmosphere (ISA):** Troposphere lapse rate of 6.5 K/km up to 11 km, constant temperature in the lower stratosphere (11-20 km)
-- **Mach cone half-angle:** θ = arcsin(1/M)
-- **Sonic boom N-wave:** Characteristic overpressure-underpressure profile with sharp front/rear shocks
-- **Drag model:** Subsonic skin friction + transonic wave drag rise + supersonic wave drag
-- **Dynamic pressure:** q = ½ρv² used for all aerodynamic force calculations
-- **Lift-drag balance:** CL derived from level flight condition (L = W)
+## Platforms
+
+### Defence
+- **HAL Tejas Mk1A** — Supersonic flight physics: Mach cone formation, sonic boom N-wave, four forces of flight, performance envelope, drag vs Mach, ISA atmosphere profile, ground footprint
+- **BrahMos Missile** — Ramjet/scramjet propulsion, cruise trajectory with sea-skimming terminal phase, 3 variants (Block III, ER, Hypersonic)
+- **AMCA Stealth Fighter** — Radar cross section comparison across 6 aircraft, radar detection range calculator, angular RCS polar pattern (Tejas vs AMCA)
+- **Akash Missile** — Surface-to-air intercept trajectory with proportional navigation, kill envelope visualization
+
+### ISRO
+- **Chandrayaan 3** — Earth orbit raising sequence (7 maneuvers with real mission data), lunar orbit insertion, vis-viva orbital velocity charts, powered descent profile for Vikram lander
+- **Gaganyaan Re-entry** — Atmospheric re-entry simulation, G-force profile, heat shield stagnation temperature, parachute deployment phases, adjustable entry angle
+- **PSLV-XL** — 4-stage launch trajectory, velocity/G-force profiles, stage separation events
+- **GSLV Mk III (LVM3)** — 3-stage heavy-lift trajectory with cryogenic upper stage
+
+### Private Space
+- **Agnikul Cosmos (Agnibaan)** — 3D-printed Agnilet engine, 2-stage launch simulation
+- **Skyroot (Vikram-1)** — 3D-printed Raman engine, 3-stage solid+liquid launch simulation
+
+### Explore
+- **Compare Platforms** — Side-by-side specs and charts for any 2 of 8 platforms
+- **Satellite Orbit Visualizer** — Ground track, orbital velocity, period, Indian satellite reference orbits
+- **Quiz** — 10 physics questions covering all platforms with explanations and scoring
+
+## Physics Models
+
+| Model | Application |
+|-------|-------------|
+| International Standard Atmosphere (ISA) | Temperature, pressure, density vs altitude |
+| Mach cone geometry | Shockwave half-angle: arcsin(1/M) |
+| Sonic boom N-wave | Overpressure shock profile |
+| Tsiolkovsky rocket equation | Multi-stage delta-v and propellant mass |
+| Transonic drag model | Subsonic + wave drag rise + supersonic |
+| Vis-viva equation | Orbital velocity at any point in an orbit |
+| Keplerian orbit geometry | Elliptical transfer orbits |
+| Radar equation | Detection range vs RCS |
+| Proportional navigation | Missile intercept guidance law |
+| Sutton-Graves heating | Re-entry stagnation point temperature |
+| Satellite ground track | Orbital projection onto Earth surface |
 
 ## Tech Stack
-- Python
-- Streamlit
-- Plotly
-- NumPy
 
-## How to run
-```
+- **Python** + **Streamlit** — web framework and deployment
+- **Plotly** — interactive 3D and 2D data visualisation
+- **NumPy** — physics computations
+
+## Run Locally
+
+```bash
 pip install streamlit plotly numpy
-python -m streamlit run vajra.py
+streamlit run vajra.py
 ```
+
+## Roadmap
+
+- Live ISRO satellite tracking (real-time TLE data)
+- Tejas Mk1A spotting log + community map
+- Mobile app (Play Store / App Store)
 
 ## About
-Built by Atharv Shukla, Class 12, Amity International School Sector 46 Gurgaon.
-Part of a self-directed aerospace engineering project portfolio.
-Inspired by HAL's Tejas Mk1A supersonic fighter jet program.
+
+Built by **Atharv Shukla**, Class 12, Amity International School Sector 46 Gurgaon.
+Self-directed aerospace engineering project portfolio.
