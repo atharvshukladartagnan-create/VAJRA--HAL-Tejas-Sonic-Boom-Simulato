@@ -1,35 +1,47 @@
 # VAJRA — Indian Aerospace Physics Simulator
 
-An interactive real-time physics simulator showcasing India's indigenous aerospace capabilities. Built with real engineering parameters, VAJRA lets you explore the physics behind India's most advanced defence and space systems.
+An interactive real-time physics simulator showcasing India's indigenous aerospace capabilities. Built with real engineering parameters across 10 platforms, 3 exploration tools, and a quiz.
 
 **Live app:** [vajra-hal-tejas.streamlit.app](https://vajra-hal-tejas.streamlit.app)
 
-## Platforms Simulated
+## Platforms
 
 ### Defence
-- **HAL Tejas Mk1A** — Supersonic flight physics: Mach cone formation, sonic boom N-wave, four forces of flight, performance envelope, flight regime detection
-- **BrahMos Missile** — Ramjet vs scramjet propulsion, sea-skimming terminal phase, cruise trajectory
+- **HAL Tejas Mk1A** — Supersonic flight physics: Mach cone formation, sonic boom N-wave, four forces of flight, performance envelope, drag vs Mach, ISA atmosphere profile, ground footprint
+- **BrahMos Missile** — Ramjet/scramjet propulsion, cruise trajectory with sea-skimming terminal phase, 3 variants (Block III, ER, Hypersonic)
+- **AMCA Stealth Fighter** — Radar cross section comparison across 6 aircraft, radar detection range calculator, angular RCS polar pattern (Tejas vs AMCA)
+- **Akash Missile** — Surface-to-air intercept trajectory with proportional navigation, kill envelope visualization
 
 ### ISRO
-- **PSLV-XL** — Multi-stage orbital mechanics, Tsiolkovsky rocket equation, gravity-turn trajectory
-- **GSLV Mk III (LVM3)** — Cryogenic upper stage, heavy-lift payload analysis, stage separation dynamics
+- **Chandrayaan 3** — Earth orbit raising sequence (7 maneuvers with real mission data), lunar orbit insertion, vis-viva orbital velocity charts, powered descent profile for Vikram lander
+- **Gaganyaan Re-entry** — Atmospheric re-entry simulation, G-force profile, heat shield stagnation temperature, parachute deployment phases, adjustable entry angle
+- **PSLV-XL** — 4-stage launch trajectory, velocity/G-force profiles, stage separation events
+- **GSLV Mk III (LVM3)** — 3-stage heavy-lift trajectory with cryogenic upper stage
 
 ### Private Space
-- **Agnikul Cosmos — Agnibaan** — 3D-printed Agnilet semi-cryogenic engine, single-piece combustion chamber
-- **Skyroot — Vikram-1** — 3D-printed Raman engine, carbon composite structure, solid + liquid staging
+- **Agnikul Cosmos (Agnibaan)** — 3D-printed Agnilet engine, 2-stage launch simulation
+- **Skyroot (Vikram-1)** — 3D-printed Raman engine, 3-stage solid+liquid launch simulation
+
+### Explore
+- **Compare Platforms** — Side-by-side specs and charts for any 2 of 8 platforms
+- **Satellite Orbit Visualizer** — Ground track, orbital velocity, period, Indian satellite reference orbits
+- **Quiz** — 10 physics questions covering all platforms with explanations and scoring
 
 ## Physics Models
 
 | Model | Application |
 |-------|-------------|
-| International Standard Atmosphere (ISA) | Temperature, pressure, density vs altitude (troposphere + stratosphere) |
-| Mach cone geometry | Shockwave half-angle: θ = arcsin(1/M) |
-| Sonic boom N-wave | Overpressure–underpressure shock profile |
+| International Standard Atmosphere (ISA) | Temperature, pressure, density vs altitude |
+| Mach cone geometry | Shockwave half-angle: arcsin(1/M) |
+| Sonic boom N-wave | Overpressure shock profile |
 | Tsiolkovsky rocket equation | Multi-stage delta-v and propellant mass |
-| Drag model | Subsonic skin friction + transonic wave drag rise + supersonic wave drag |
-| Dynamic pressure | q = ½ρv² for aerodynamic force calculations |
-| Gravity-turn trajectory | Orbital insertion approximation |
-| Prandtl-Glauert correction | Compressibility effects near Mach 1 |
+| Transonic drag model | Subsonic + wave drag rise + supersonic |
+| Vis-viva equation | Orbital velocity at any point in an orbit |
+| Keplerian orbit geometry | Elliptical transfer orbits |
+| Radar equation | Detection range vs RCS |
+| Proportional navigation | Missile intercept guidance law |
+| Sutton-Graves heating | Re-entry stagnation point temperature |
+| Satellite ground track | Orbital projection onto Earth surface |
 
 ## Tech Stack
 
@@ -46,11 +58,8 @@ streamlit run vajra.py
 
 ## Roadmap
 
-- Chandrayaan orbital mechanics simulator
-- Gaganyaan re-entry heat shield analysis
-- AMCA stealth aircraft profile
-- Akash missile intercept trajectory
-- Live ISRO satellite tracking
+- Live ISRO satellite tracking (real-time TLE data)
+- Tejas Mk1A spotting log + community map
 - Mobile app (Play Store / App Store)
 
 ## About
