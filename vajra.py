@@ -2025,7 +2025,7 @@ elif page == "Mission Challenge Lab":
 # ================================================================
 elif page == "Live Satellite Tracker":
 
-    refresh_interval = st.sidebar.select_slider("Auto-Refresh", options=[10, 15, 30, 60], value=30, format_func=lambda x: f"{x}s")
+    refresh_interval = st.sidebar.select_slider("Auto-Refresh", options=[5, 10, 15, 30], value=5, format_func=lambda x: f"{x}s")
     st_autorefresh(interval=refresh_interval * 1000, key="sat_tracker_refresh")
 
     @st.cache_data(ttl=3600)
