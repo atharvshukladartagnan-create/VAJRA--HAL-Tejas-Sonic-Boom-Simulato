@@ -212,7 +212,7 @@ elif category == "ISRO":
 elif category == "Private Space":
     page = st.sidebar.radio("Company", ["Agnikul Cosmos — Agnibaan", "Skyroot — Vikram-1"], label_visibility="collapsed")
 elif category == "Explore":
-    page = st.sidebar.radio("Tool", ["Compare Platforms", "Satellite Orbit Visualizer", "Quiz"], label_visibility="collapsed")
+    page = st.sidebar.radio("Tool", ["Compare Platforms", "Satellite Orbit Visualizer", "Mission Challenge Lab"], label_visibility="collapsed")
 else:
     page = "About VAJRA"
 
@@ -1636,72 +1636,387 @@ elif page == "Satellite Orbit Visualizer":
 
 
 # ================================================================
-# QUIZ
+# MISSION CHALLENGE LAB
 # ================================================================
-elif page == "Quiz":
-    st.markdown('<p class="section-header">Test Your Knowledge</p>', unsafe_allow_html=True)
-    st.markdown('<div class="alert-box alert-info">10 questions covering the physics behind every platform in VAJRA. Pick your answer, then expand "Show Answer" to check.</div>', unsafe_allow_html=True)
+elif page == "Mission Challenge Lab":
+    st.markdown('<p class="section-header">Mission Challenge Lab</p>', unsafe_allow_html=True)
+    st.markdown('<div class="alert-box alert-info">5 hands-on physics challenges. Dial in the parameters, hit the physics, and see if your mission succeeds or fails in real time.</div>', unsafe_allow_html=True)
 
-    quiz_data = [
-        {"q": "At Mach 1.5, what is the Mach cone half-angle?",
-         "opts": ["30°", "41.8°", "60°", "90°"],
-         "ans": 1, "explain": "Half-angle = arcsin(1/M) = arcsin(1/1.5) = 41.8°. The faster you go, the narrower the cone."},
-        {"q": "Why does drag spike near Mach 1 (the sound barrier)?",
-         "opts": ["Engine loses power", "Air can't move out of the way fast enough, creating shockwaves", "Wings lose lift", "Gravity increases"],
-         "ans": 1, "explain": "Near Mach 1, air ahead can't 'warn' air further ahead to move aside. This creates shockwaves and wave drag, a massive spike in resistance called the transonic drag rise."},
-        {"q": "What does Isp (specific impulse) measure?",
-         "opts": ["Engine temperature", "Fuel efficiency — seconds of thrust per kg of fuel", "Maximum speed", "Engine weight"],
-         "ans": 1, "explain": "Isp tells you how many seconds one kg of propellant can produce one kg of thrust. Higher Isp = more efficient. Cryogenic engines (Isp ~440s) are nearly 2x more efficient than solid motors (~270s)."},
-        {"q": "Why does ISRO raise Chandrayaan's orbit gradually instead of flying directly to the Moon?",
-         "opts": ["The rocket isn't powerful enough", "Gradual burns at perigee are more fuel-efficient than one large burn", "To take photos of Earth", "To test the engines"],
-         "ans": 1, "explain": "Burning at perigee (closest point) gives the most efficient orbit change (Oberth effect). Small burns at perigee stretch the apogee further each time, requiring less total fuel than a single direct injection."},
-        {"q": "What makes BrahMos nearly impossible to intercept?",
-         "opts": ["It's invisible to radar", "Mach 2.8 speed + sea-skimming at 10m altitude gives defenders only seconds to react", "It flies too high", "It changes direction randomly"],
-         "ans": 1, "explain": "At Mach 2.8 and 10m above sea level, BrahMos hugs the radar horizon. A ship's defence system gets only a few seconds from detection to impact — not enough time for most countermeasures."},
-        {"q": "What is special about Agnikul's Agnilet engine?",
-         "opts": ["It uses nuclear fuel", "It's the world's first single-piece 3D-printed rocket engine", "It's reusable 100 times", "It runs on hydrogen"],
-         "ans": 1, "explain": "Traditional engines have 100+ parts welded together. Agnilet is 3D-printed as one piece of metal — fewer failure points, faster manufacturing, and lower cost."},
-        {"q": "In the vis-viva equation v = sqrt(GM(2/r - 1/a)), what happens to velocity as r decreases?",
-         "opts": ["Velocity decreases", "Velocity increases", "Velocity stays constant", "The satellite falls"],
-         "ans": 1, "explain": "As r (distance from the central body) decreases, 2/r increases, making v larger. This is why satellites move fastest at their closest approach (perigee/periselene) — Kepler's second law."},
-        {"q": "Why does the Gaganyaan capsule need a heat shield for re-entry?",
-         "opts": ["Space is cold", "The capsule hits atmosphere at 7.8 km/s, compressing air to ~2000°C", "To protect from radiation", "To keep the interior pressurised"],
-         "ans": 1, "explain": "At 7.8 km/s (28,000 km/h), air in front of the capsule can't move aside and gets compressed violently. This compression heats the air to ~2000°C. The ablative heat shield chars and vaporises, carrying heat away."},
-        {"q": "How does stealth (low RCS) affect radar detection range?",
-         "opts": ["Detection range halves with halved RCS", "Detection range scales with the 4th root of RCS, so 16x smaller RCS = half the range", "RCS doesn't affect range", "Lower RCS increases range"],
-         "ans": 1, "explain": "The radar equation: range scales with RCS^(1/4). To halve detection distance, you need to reduce RCS by 2^4 = 16 times. AMCA's ~0.1 m² vs Tejas's ~1.5 m² means significantly reduced detection range."},
-        {"q": "What orbit altitude gives a 24-hour period (geostationary)?",
-         "opts": ["400 km", "2,000 km", "20,200 km", "35,786 km"],
-         "ans": 3, "explain": "At 35,786 km, the orbital period equals Earth's rotation (24 hours). The satellite appears stationary over one point. India's GSAT communication satellites and NavIC navigation satellites use this orbit."},
-    ]
-
-    if 'quiz_answers' not in st.session_state:
-        st.session_state.quiz_answers = {}
-
-    score = 0
-    for i, qd in enumerate(quiz_data):
-        st.markdown(f'<div class="hud-card"><p style="font-family:Archivo,sans-serif; color:{TEXT}; font-weight:700; margin-bottom:10px;">Q{i+1}. {qd["q"]}</p></div>', unsafe_allow_html=True)
-        key = f"quiz_{i}"
-        answer = st.radio(f"Q{i+1}", qd["opts"], key=key, label_visibility="collapsed")
-        selected_idx = qd["opts"].index(answer)
-        with st.expander("Show Answer"):
-            if selected_idx == qd["ans"]:
-                st.markdown(f'<span style="color:{GREEN}; font-family:Archivo; font-weight:700;">CORRECT!</span>', unsafe_allow_html=True)
-                score += 1
-            else:
-                st.markdown(f'<span style="color:{RED}; font-family:Archivo; font-weight:700;">INCORRECT</span> — Answer: **{qd["opts"][qd["ans"]]}**', unsafe_allow_html=True)
-            st.markdown(qd["explain"])
+    challenge = st.selectbox("Select Challenge", [
+        "1. Orbit Insertion: Reach Your Target Altitude",
+        "2. Re-entry Survival: Bring the Crew Home",
+        "3. Stealth Penetration: Slip Past Enemy Radar",
+        "4. Rocket Design: Build a Rocket to Orbit",
+        "5. Missile Intercept: Defend the Airspace",
+    ], label_visibility="collapsed")
 
     st.markdown("---")
-    pct = score / len(quiz_data) * 100
-    grade_color = GREEN if pct >= 70 else YELLOW if pct >= 40 else RED
-    st.markdown(f"""
-    <div class="hud-card" style="text-align:center; padding:25px;">
-      <span style="font-family:JetBrains Mono; font-size:2.5rem; font-weight:700; color:{grade_color};">{score}/{len(quiz_data)}</span><br>
-      <span style="font-family:Rajdhani,sans-serif; font-size:1.1rem; color:{MUTED}; letter-spacing:2px; text-transform:uppercase;">
-      {'Mission Specialist' if pct >= 90 else 'Flight Engineer' if pct >= 70 else 'Cadet' if pct >= 40 else 'Ground Crew'}</span>
-    </div>
-    """, unsafe_allow_html=True)
+
+    # ---- CHALLENGE 1: ORBIT INSERTION ----
+    if challenge.startswith("1"):
+        st.markdown(f'<div class="hud-card"><p style="font-family:Archivo,sans-serif; color:{TEXT}; font-weight:800; font-size:1.1rem;">ORBIT INSERTION CHALLENGE</p><p style="font-family:Rajdhani,sans-serif; color:{MUTED}; font-size:0.95rem;">You are in a 200 km parking orbit. Apply a delta-v burn to reach the target orbit. Use the vis-viva equation to figure out the right burn.</p></div>', unsafe_allow_html=True)
+
+        MU = 3.986e14
+        R_E = 6.371e6
+        r1 = R_E + 200e3
+
+        target_alt = st.select_slider("Target Orbit Altitude", options=[400, 600, 800, 2000, 20200, 35786], value=600, format_func=lambda x: f"{x:,} km")
+        r2 = R_E + target_alt * 1e3
+        user_dv = st.slider("Your Delta-V Burn (m/s)", 0, 4000, 100, 10)
+
+        v_park = np.sqrt(MU / r1)
+        a_transfer = (r1 + r2) / 2
+        v_transfer_perigee = np.sqrt(MU * (2/r1 - 1/a_transfer))
+        dv_needed = v_transfer_perigee - v_park
+
+        a_actual = 1 / (2/r1 - (v_park + user_dv)**2 / MU)
+        apogee_actual = 2 * a_actual - r1
+        alt_reached = (apogee_actual - R_E) / 1e3
+
+        error_pct = abs(user_dv - dv_needed) / dv_needed * 100 if dv_needed > 0 else 0
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"""
+            <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+              <div class="hud-metric"><span class="value">{v_park:.0f} m/s</span><span class="label">Parking Velocity</span></div>
+              <div class="hud-metric"><span class="value">{user_dv} m/s</span><span class="label">Your Burn</span></div>
+              <div class="hud-metric"><span class="value">{dv_needed:.0f} m/s</span><span class="label">Required</span></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if alt_reached > 0:
+                if error_pct < 3:
+                    st.markdown(f'<div class="alert-box alert-info" style="border-color:{GREEN}; color:{GREEN};">MISSION SUCCESS. You reached {alt_reached:,.0f} km (target: {target_alt:,} km). Error: {error_pct:.1f}%</div>', unsafe_allow_html=True)
+                elif error_pct < 15:
+                    st.markdown(f'<div class="alert-box alert-warning">CLOSE. You reached {alt_reached:,.0f} km instead of {target_alt:,} km. Off by {error_pct:.1f}%. A correction burn could fix this.</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="alert-box alert-warning" style="border-color:{RED}; color:{RED};">MISSION FAILED. Your orbit apogee: {alt_reached:,.0f} km. Target was {target_alt:,} km. {"Burn too low, not enough energy." if user_dv < dv_needed else "Burn too high, wasting fuel on an overshoot."}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="alert-box alert-warning" style="border-color:{RED}; color:{RED};">MISSION FAILED. Negative orbit, the burn sent you back into the atmosphere.</div>', unsafe_allow_html=True)
+
+        with col2:
+            fig_orb = go.Figure()
+            theta = np.linspace(0, 2*np.pi, 300)
+            fig_orb.add_trace(go.Scatter(x=6371*np.cos(theta), y=6371*np.sin(theta), mode='lines', line=dict(color='#1a3a5c', width=2), name='Earth', fill='toself', fillcolor='rgba(26,58,92,0.3)'))
+            fig_orb.add_trace(go.Scatter(x=(6371+200)*np.cos(theta), y=(6371+200)*np.sin(theta), mode='lines', line=dict(color=MUTED, width=1, dash='dot'), name='Parking (200 km)'))
+            fig_orb.add_trace(go.Scatter(x=(6371+target_alt)*np.cos(theta), y=(6371+target_alt)*np.sin(theta), mode='lines', line=dict(color=GREEN, width=1, dash='dot'), name=f'Target ({target_alt:,} km)'))
+            if a_actual > 0 and alt_reached > 0:
+                e_transfer = 1 - r1 / a_actual
+                a_km = a_actual / 1e3
+                r_transfer = a_km * (1 - e_transfer**2) / (1 + e_transfer * np.cos(theta))
+                r_transfer = np.clip(r_transfer, 0, 80000)
+                fig_orb.add_trace(go.Scatter(x=r_transfer*np.cos(theta), y=r_transfer*np.sin(theta), mode='lines', line=dict(color=ACCENT, width=2), name='Your Transfer'))
+            fig_orb.add_trace(go.Scatter(x=[6371+200], y=[0], mode='markers', marker=dict(size=8, color=ACCENT, symbol='triangle-right'), name='Burn Point'))
+            fig_orb.update_layout(title=dict(text="Orbital View", font=dict(color=CHART_TITLE, family='Archivo', size=13)),
+                xaxis=dict(scaleanchor='y'), yaxis=dict(constrain='domain'))
+            plotly_layout(fig_orb, height=420)
+            st.plotly_chart(fig_orb, use_container_width=True)
+
+        with st.expander("Physics: How Hohmann transfers work"):
+            st.markdown(f"A Hohmann transfer is the most fuel-efficient way to move between two circular orbits. You burn prograde (forward) at the parking orbit to enter an elliptical transfer orbit whose apogee touches the target altitude. The delta-v needed comes from the vis-viva equation: v = sqrt(GM(2/r - 1/a)). For your target of {target_alt:,} km, the transfer semi-major axis is {a_transfer/1e3:,.0f} km, requiring a burn of {dv_needed:.0f} m/s at perigee.")
+
+    # ---- CHALLENGE 2: RE-ENTRY SURVIVAL ----
+    elif challenge.startswith("2"):
+        st.markdown(f'<div class="hud-card"><p style="font-family:Archivo,sans-serif; color:{TEXT}; font-weight:800; font-size:1.1rem;">RE-ENTRY SURVIVAL CHALLENGE</p><p style="font-family:Rajdhani,sans-serif; color:{MUTED}; font-size:0.95rem;">Gaganyaan is returning from orbit at 7.8 km/s. Pick the entry angle to survive. Too steep = crew blacks out from G-forces. Too shallow = capsule skips off the atmosphere and is lost in space.</p></div>', unsafe_allow_html=True)
+
+        entry_angle = st.slider("Flight Path Angle (degrees below horizontal)", 0.5, 15.0, 3.0, 0.1)
+        capsule_mass = st.slider("Capsule Mass (kg)", 3000, 8000, 5400, 100)
+
+        v_entry = 7800
+        rho_ref = 0.4
+        Cd = 1.2
+        A = 3.7
+        nose_r = 1.2
+        k_sg = 1.7415e-4
+
+        sin_gamma = np.sin(np.radians(entry_angle))
+        peak_decel = (rho_ref * v_entry**2 * Cd * A * sin_gamma) / (2 * capsule_mass)
+        peak_g = peak_decel / 9.81
+        stag_temp = k_sg * np.sqrt(rho_ref / nose_r) * v_entry**3
+        stag_temp_c = stag_temp - 273 if stag_temp > 273 else stag_temp
+
+        skip_threshold = 1.5
+        lethal_g = 12
+        crew_limit = 6
+        skip_risk = entry_angle < skip_threshold
+
+        col1, col2 = st.columns(2)
+        with col1:
+            g_color = GREEN if peak_g < crew_limit else YELLOW if peak_g < lethal_g else RED
+            st.markdown(f"""
+            <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+              <div class="hud-metric"><span class="value" style="color:{g_color};">{peak_g:.1f} G</span><span class="label">Peak G-Force</span></div>
+              <div class="hud-metric"><span class="value">{stag_temp_c:,.0f} C</span><span class="label">Heat Shield Temp</span></div>
+              <div class="hud-metric"><span class="value">{entry_angle}°</span><span class="label">Entry Angle</span></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if skip_risk:
+                st.markdown(f'<div class="alert-box alert-warning" style="border-color:{RED}; color:{RED};">SKIP-OUT. Entry angle too shallow ({entry_angle}°). The capsule bounces off the atmosphere and is lost. Minimum safe angle is ~1.5°.</div>', unsafe_allow_html=True)
+            elif peak_g > lethal_g:
+                st.markdown(f'<div class="alert-box alert-warning" style="border-color:{RED}; color:{RED};">CREW LOST. Peak deceleration of {peak_g:.1f}G exceeds survivable limits (~12G). The entry was too steep.</div>', unsafe_allow_html=True)
+            elif peak_g > crew_limit:
+                st.markdown(f'<div class="alert-box alert-warning">SURVIVABLE BUT DANGEROUS. {peak_g:.1f}G will cause blackouts and potential injury. Aim for under {crew_limit}G. Try a shallower angle.</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="alert-box alert-info" style="border-color:{GREEN}; color:{GREEN};">CREW SAFE. {peak_g:.1f}G is within human tolerance. Heat shield handles {stag_temp_c:,.0f}°C. Parachutes deploy after deceleration.</div>', unsafe_allow_html=True)
+
+        with col2:
+            angles_range = np.linspace(0.5, 15, 100)
+            g_profile = [(rho_ref * v_entry**2 * Cd * A * np.sin(np.radians(a))) / (2 * capsule_mass * 9.81) for a in angles_range]
+            fig_re = go.Figure()
+            fig_re.add_trace(go.Scatter(x=angles_range, y=g_profile, mode='lines', line=dict(color=ACCENT, width=2), name='G-Force'))
+            fig_re.add_hline(y=crew_limit, line_dash="dash", line_color=YELLOW, annotation_text="Crew Comfort Limit (6G)", annotation_font=dict(color=YELLOW, size=10))
+            fig_re.add_hline(y=lethal_g, line_dash="dash", line_color=RED, annotation_text="Lethal (12G)", annotation_font=dict(color=RED, size=10))
+            fig_re.add_vline(x=skip_threshold, line_dash="dash", line_color='#60a5fa', annotation_text="Skip-out", annotation_font=dict(color='#60a5fa', size=10))
+            fig_re.add_trace(go.Scatter(x=[entry_angle], y=[peak_g], mode='markers', marker=dict(size=12, color=g_color, symbol='x', line=dict(width=2, color='white')), name='Your Entry'))
+            fig_re.update_layout(title=dict(text="G-Force vs Entry Angle", font=dict(color=CHART_TITLE, family='Archivo', size=13)),
+                xaxis=dict(title="Entry Angle (°)"), yaxis=dict(title="Peak G-Force"))
+            plotly_layout(fig_re, height=420)
+            st.plotly_chart(fig_re, use_container_width=True)
+
+        with st.expander("Physics: The re-entry corridor"):
+            st.markdown(f"Returning spacecraft must thread a narrow corridor. Below ~1.5°, the capsule grazes the atmosphere and skips back into space with no fuel to return. Above ~7°, deceleration crushes the crew. The sweet spot for Gaganyaan is around 2° to 5°. The Sutton-Graves model estimates stagnation heating: T = k * sqrt(rho/r_nose) * v^3. At {v_entry} m/s, the heat shield surface hits {stag_temp_c:,.0f}°C. The ablative shield chars and vaporizes, carrying heat away from the crew cabin.")
+
+    # ---- CHALLENGE 3: STEALTH PENETRATION ----
+    elif challenge.startswith("3"):
+        st.markdown(f'<div class="hud-card"><p style="font-family:Archivo,sans-serif; color:{TEXT}; font-weight:800; font-size:1.1rem;">STEALTH PENETRATION CHALLENGE</p><p style="font-family:Rajdhani,sans-serif; color:{MUTED}; font-size:0.95rem;">An enemy S-400 radar is 300 km away. Pick your aircraft and flight altitude to get within strike range (50 km) without being detected. The radar equation decides if you make it.</p></div>', unsafe_allow_html=True)
+
+        aircraft = st.selectbox("Aircraft", ["AMCA (RCS: 0.1 m²)", "Tejas Mk1A (RCS: 1.5 m²)", "Su-30MKI (RCS: 10 m²)", "Custom"])
+        rcs_map = {"AMCA (RCS: 0.1 m²)": 0.1, "Tejas Mk1A (RCS: 1.5 m²)": 1.5, "Su-30MKI (RCS: 10 m²)": 10.0}
+        if aircraft == "Custom":
+            rcs = st.slider("Custom RCS (m²)", 0.01, 20.0, 1.0, 0.01)
+        else:
+            rcs = rcs_map[aircraft]
+
+        flight_alt = st.slider("Flight Altitude (m)", 50, 15000, 5000, 50)
+        approach_dist = 300
+
+        P_t = 2e6
+        G = 10**(40/10)
+        wavelength = 0.03
+        sigma = rcs
+        P_min = 1e-14
+        R_max_free = ((P_t * G**2 * wavelength**2 * sigma) / ((4 * np.pi)**3 * P_min))**0.25 / 1000
+
+        R_horizon = 4.12 * (np.sqrt(30) + np.sqrt(flight_alt))
+        detection_range = min(R_max_free, R_horizon)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            penetrated = detection_range < 50
+            detected_at = approach_dist - detection_range if detection_range < approach_dist else 0
+            st.markdown(f"""
+            <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+              <div class="hud-metric"><span class="value">{rcs} m²</span><span class="label">RCS</span></div>
+              <div class="hud-metric"><span class="value">{R_max_free:.0f} km</span><span class="label">Radar Range (free space)</span></div>
+              <div class="hud-metric"><span class="value">{R_horizon:.0f} km</span><span class="label">Radar Horizon</span></div>
+              <div class="hud-metric"><span class="value" style="color:{GREEN if penetrated else RED};">{detection_range:.0f} km</span><span class="label">Actual Detection Range</span></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if penetrated:
+                st.markdown(f'<div class="alert-box alert-info" style="border-color:{GREEN}; color:{GREEN};">STEALTH SUCCESS. Detection range ({detection_range:.0f} km) is under 50 km strike range. You can deliver weapons before the enemy reacts.</div>', unsafe_allow_html=True)
+            elif detection_range < 150:
+                st.markdown(f'<div class="alert-box alert-warning">PARTIAL PENETRATION. Detected at {detection_range:.0f} km. Enemy has {detection_range/0.8:.0f} seconds to react (assuming Mach 0.8 approach). Try lower altitude or lower RCS.</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="alert-box alert-warning" style="border-color:{RED}; color:{RED};">DETECTED EARLY. Radar picks you up at {detection_range:.0f} km. Enemy has minutes to scramble interceptors and lock SAMs. Mission compromised.</div>', unsafe_allow_html=True)
+
+        with col2:
+            rcs_vals = np.logspace(-2, 1.5, 100)
+            det_ranges = [min(((P_t * G**2 * wavelength**2 * s) / ((4*np.pi)**3 * P_min))**0.25 / 1000, R_horizon) for s in rcs_vals]
+            fig_st = go.Figure()
+            fig_st.add_trace(go.Scatter(x=rcs_vals, y=det_ranges, mode='lines', line=dict(color=ACCENT, width=2), name='Detection Range'))
+            fig_st.add_hline(y=50, line_dash="dash", line_color=GREEN, annotation_text="Strike Range (50 km)", annotation_font=dict(color=GREEN, size=10))
+            fig_st.add_trace(go.Scatter(x=[rcs], y=[detection_range], mode='markers', marker=dict(size=12, color=GREEN if penetrated else RED, symbol='x', line=dict(width=2, color='white')), name='Your Aircraft'))
+            fig_st.update_layout(title=dict(text="Detection Range vs RCS", font=dict(color=CHART_TITLE, family='Archivo', size=13)),
+                xaxis=dict(title="RCS (m², log scale)", type="log"), yaxis=dict(title="Detection Range (km)"))
+            plotly_layout(fig_st, height=420)
+            st.plotly_chart(fig_st, use_container_width=True)
+
+        with st.expander("Physics: The radar equation"):
+            st.markdown(f"Detection range scales with the 4th root of RCS: R = (Pt * G² * lambda² * sigma / ((4pi)^3 * Pmin))^(1/4). This means reducing RCS by 16x only halves the detection range. But at low altitude, the radar horizon (R_h = 4.12 * (sqrt(h_radar) + sqrt(h_target))) becomes the hard limit. Flying at {flight_alt}m, the horizon is {R_horizon:.0f} km. AMCA at 0.1 m² vs Su-30MKI at 10 m² changes detection range by a factor of (10/0.1)^0.25 = 3.16x.")
+
+    # ---- CHALLENGE 4: ROCKET DESIGN ----
+    elif challenge.startswith("4"):
+        st.markdown(f'<div class="hud-card"><p style="font-family:Archivo,sans-serif; color:{TEXT}; font-weight:800; font-size:1.1rem;">ROCKET DESIGN CHALLENGE</p><p style="font-family:Rajdhani,sans-serif; color:{MUTED}; font-size:0.95rem;">Design a 2-stage rocket that reaches orbit. You need ~9,400 m/s of total delta-v (including gravity and drag losses). Pick your engine types, fuel loads, and structural masses. Tsiolkovsky decides if you make it.</p></div>', unsafe_allow_html=True)
+
+        DV_ORBIT = 9400
+        engine_options = {"Solid Motor (Isp 260s)": 260, "Liquid Kerosene (Isp 310s)": 310, "Cryogenic LH2/LOX (Isp 440s)": 440, "Semi-Cryogenic (Isp 360s)": 360}
+
+        st.markdown(f'<p style="font-family:Archivo; color:{ACCENT}; font-weight:700; font-size:0.9rem; letter-spacing:1px;">STAGE 1</p>', unsafe_allow_html=True)
+        c1a, c1b, c1c = st.columns(3)
+        with c1a:
+            eng1 = st.selectbox("Stage 1 Engine", list(engine_options.keys()), key="eng1")
+        with c1b:
+            fuel1 = st.slider("Stage 1 Fuel (tonnes)", 10, 300, 130, 5, key="fuel1")
+        with c1c:
+            struct1 = st.slider("Stage 1 Structure (tonnes)", 2, 40, 12, 1, key="struct1")
+
+        st.markdown(f'<p style="font-family:Archivo; color:{ACCENT}; font-weight:700; font-size:0.9rem; letter-spacing:1px;">STAGE 2</p>', unsafe_allow_html=True)
+        c2a, c2b, c2c = st.columns(3)
+        with c2a:
+            eng2 = st.selectbox("Stage 2 Engine", list(engine_options.keys()), index=2, key="eng2")
+        with c2b:
+            fuel2 = st.slider("Stage 2 Fuel (tonnes)", 2, 60, 25, 1, key="fuel2")
+        with c2c:
+            struct2 = st.slider("Stage 2 Structure (tonnes)", 1, 15, 3, 1, key="struct2")
+
+        payload = st.slider("Payload Mass (kg)", 100, 10000, 1500, 100)
+
+        isp1 = engine_options[eng1]
+        isp2 = engine_options[eng2]
+        ve1 = isp1 * 9.81
+        ve2 = isp2 * 9.81
+
+        m_payload = payload / 1000
+        m2_total = struct2 + fuel2 + m_payload
+        m2_dry = struct2 + m_payload
+        dv2 = ve2 * np.log(m2_total / m2_dry) if m2_dry > 0 else 0
+
+        m1_total = struct1 + fuel1 + m2_total
+        m1_dry = struct1 + m2_total
+        dv1 = ve1 * np.log(m1_total / m1_dry) if m1_dry > 0 else 0
+
+        dv_total = dv1 + dv2
+        twr_estimate = (fuel1 * 1000 * 9.81 * isp1 / (fuel1 * 1000 / (fuel1 * 1000 / (isp1 * 9.81 * 0.8)))) / (m1_total * 1000 * 9.81) if m1_total > 0 else 0
+
+        mass_ratio_1 = fuel1 / struct1 if struct1 > 0 else 0
+        mass_ratio_2 = fuel2 / struct2 if struct2 > 0 else 0
+
+        col1, col2 = st.columns(2)
+        with col1:
+            dv_color = GREEN if dv_total >= DV_ORBIT else YELLOW if dv_total >= DV_ORBIT * 0.85 else RED
+            st.markdown(f"""
+            <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+              <div class="hud-metric"><span class="value">{dv1:.0f} m/s</span><span class="label">Stage 1 Delta-V</span></div>
+              <div class="hud-metric"><span class="value">{dv2:.0f} m/s</span><span class="label">Stage 2 Delta-V</span></div>
+              <div class="hud-metric"><span class="value" style="color:{dv_color};">{dv_total:.0f} m/s</span><span class="label">Total Delta-V</span></div>
+              <div class="hud-metric"><span class="value">{m1_total:.0f} t</span><span class="label">Liftoff Mass</span></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if dv_total >= DV_ORBIT:
+                margin = dv_total - DV_ORBIT
+                st.markdown(f'<div class="alert-box alert-info" style="border-color:{GREEN}; color:{GREEN};">ORBIT ACHIEVED. {dv_total:.0f} m/s total delta-v with {margin:.0f} m/s margin. {payload} kg payload delivered to LEO.</div>', unsafe_allow_html=True)
+            elif dv_total >= DV_ORBIT * 0.85:
+                deficit = DV_ORBIT - dv_total
+                st.markdown(f'<div class="alert-box alert-warning">ALMOST. {deficit:.0f} m/s short. Try more fuel, a higher Isp engine, or a lighter structure. Cryogenic upper stages are key for efficiency.</div>', unsafe_allow_html=True)
+            else:
+                deficit = DV_ORBIT - dv_total
+                st.markdown(f'<div class="alert-box alert-warning" style="border-color:{RED}; color:{RED};">FAILED TO ORBIT. {deficit:.0f} m/s short of the {DV_ORBIT} m/s target. Your rocket falls back to Earth. {"Consider a higher Isp engine for Stage 2." if isp2 < 400 else "Increase fuel mass or reduce structural mass."}</div>', unsafe_allow_html=True)
+
+        with col2:
+            fig_rk = go.Figure()
+            fig_rk.add_trace(go.Bar(
+                x=["Stage 1", "Stage 2", "Total", "Required"],
+                y=[dv1, dv2, dv_total, DV_ORBIT],
+                marker=dict(color=[ACCENT, YELLOW, dv_color, 'rgba(255,255,255,0.15)']),
+                text=[f'{dv1:.0f}', f'{dv2:.0f}', f'{dv_total:.0f}', f'{DV_ORBIT}'],
+                textposition='outside', textfont=dict(color=TEXT, family='JetBrains Mono', size=11)
+            ))
+            fig_rk.update_layout(title=dict(text="Delta-V Budget", font=dict(color=CHART_TITLE, family='Archivo', size=13)),
+                yaxis=dict(title="Delta-V (m/s)"), showlegend=False)
+            plotly_layout(fig_rk, height=420)
+            st.plotly_chart(fig_rk, use_container_width=True)
+
+        with st.expander("Physics: Tsiolkovsky rocket equation"):
+            st.markdown(f"delta-v = Ve * ln(m_wet / m_dry), where Ve = Isp * g. Each stage is calculated independently: Stage 1 carries everything above it as payload. This is why staging exists. Dropping empty tanks means Stage 2 starts with a much better mass ratio. Your Stage 1 mass ratio (fuel/structure): {mass_ratio_1:.1f}. Stage 2: {mass_ratio_2:.1f}. Real rockets aim for 8 to 12. PSLV uses solid (Isp 269s) for Stage 1 and liquid/cryo for upper stages, trading raw thrust for efficiency as the vehicle climbs.")
+
+    # ---- CHALLENGE 5: MISSILE INTERCEPT ----
+    elif challenge.startswith("5"):
+        st.markdown(f'<div class="hud-card"><p style="font-family:Archivo,sans-serif; color:{TEXT}; font-weight:800; font-size:1.1rem;">MISSILE INTERCEPT CHALLENGE</p><p style="font-family:Rajdhani,sans-serif; color:{MUTED}; font-size:0.95rem;">An incoming aircraft is approaching at a set speed and altitude. Launch an Akash SAM to intercept it. Pick the right launch angle and timing. Proportional navigation guides the missile, but you need to get the geometry right.</p></div>', unsafe_allow_html=True)
+
+        target_speed_kmh = st.slider("Target Speed (km/h)", 300, 3000, 900, 50, help="Subsonic fighter: 800-900 km/h. Supersonic: 1500+. BrahMos class: 3000+")
+        target_alt_m = st.slider("Target Altitude (m)", 500, 18000, 8000, 100)
+        target_range = st.slider("Target Range at Launch (km)", 5, 60, 25, 1)
+        launch_angle = st.slider("Launch Elevation Angle (degrees)", 10, 85, 45, 1)
+
+        AKASH_SPEED = 1000
+        AKASH_RANGE_MAX = 30
+        AKASH_ALT_MAX = 18000
+        AKASH_ALT_MIN = 30
+
+        target_speed = target_speed_kmh / 3.6
+        slant_range = np.sqrt(target_range**2 + (target_alt_m/1000)**2)
+        intercept_time = slant_range / (AKASH_SPEED/1000 + target_speed/1000 * np.cos(np.radians(launch_angle))) if AKASH_SPEED > 0 else 999
+        missile_alt_reached = (AKASH_SPEED * intercept_time * np.sin(np.radians(launch_angle))) if intercept_time < 60 else 0
+        missile_range_covered = (AKASH_SPEED * intercept_time * np.cos(np.radians(launch_angle))) / 1000 if intercept_time < 60 else 0
+
+        dt = 0.1
+        mx, my, tx, ty = [0], [0], [target_range], [target_alt_m/1000]
+        t_sim = 0
+        intercepted = False
+        miss_dist = 999
+        while t_sim < 60:
+            t_sim += dt
+            tx_new = tx[-1] - target_speed/1000 * dt
+            ty_new = ty[-1]
+            dx = tx_new - mx[-1]
+            dy = ty_new - my[-1]
+            dist = np.sqrt(dx**2 + dy**2)
+            if dist < 0.15:
+                intercepted = True
+                mx.append(tx_new)
+                my.append(ty_new)
+                tx.append(tx_new)
+                ty.append(ty_new)
+                break
+            if dist > 0:
+                vx = AKASH_SPEED/1000 * dx/dist
+                vy = AKASH_SPEED/1000 * dy/dist
+            else:
+                vx, vy = 0, 0
+            mx.append(mx[-1] + vx * dt)
+            my.append(my[-1] + vy * dt)
+            tx.append(tx_new)
+            ty.append(ty_new)
+            miss_dist = min(miss_dist, dist)
+            if mx[-1] > 60 or my[-1] > 25 or mx[-1] < -5:
+                break
+
+        in_range = target_range <= AKASH_RANGE_MAX
+        in_alt = AKASH_ALT_MIN <= target_alt_m <= AKASH_ALT_MAX
+        speed_ratio = AKASH_SPEED / target_speed if target_speed > 0 else 999
+        can_catch = speed_ratio > 1.2
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"""
+            <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+              <div class="hud-metric"><span class="value">{target_speed_kmh} km/h</span><span class="label">Target Speed</span></div>
+              <div class="hud-metric"><span class="value">{target_alt_m/1000:.1f} km</span><span class="label">Target Alt</span></div>
+              <div class="hud-metric"><span class="value">{slant_range:.1f} km</span><span class="label">Slant Range</span></div>
+              <div class="hud-metric"><span class="value" style="color:{GREEN if speed_ratio > 1.5 else YELLOW if speed_ratio > 1 else RED};">{speed_ratio:.1f}x</span><span class="label">Speed Advantage</span></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if intercepted and in_range and in_alt:
+                st.markdown(f'<div class="alert-box alert-info" style="border-color:{GREEN}; color:{GREEN};">TARGET DESTROYED. Intercept at {t_sim:.1f}s, {mx[-1]:.1f} km downrange, {my[-1]:.1f} km altitude. Proportional navigation guided the missile to impact.</div>', unsafe_allow_html=True)
+            elif not in_range:
+                st.markdown(f'<div class="alert-box alert-warning" style="border-color:{RED}; color:{RED};">OUT OF RANGE. Target is at {target_range} km, Akash max range is {AKASH_RANGE_MAX} km. Wait for the target to close distance.</div>', unsafe_allow_html=True)
+            elif not in_alt:
+                alt_issue = "too low" if target_alt_m < AKASH_ALT_MIN else "too high"
+                st.markdown(f'<div class="alert-box alert-warning" style="border-color:{RED}; color:{RED};">ALTITUDE MISMATCH. Target is {alt_issue} for Akash engagement envelope ({AKASH_ALT_MIN}m to {AKASH_ALT_MAX/1000:.0f} km).</div>', unsafe_allow_html=True)
+            elif not can_catch:
+                st.markdown(f'<div class="alert-box alert-warning" style="border-color:{RED}; color:{RED};">TOO FAST. Target at {target_speed_kmh} km/h outpaces Akash ({AKASH_SPEED*3.6:.0f} km/h). Speed ratio {speed_ratio:.1f}x is not enough for a pursuit intercept.</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="alert-box alert-warning">NEAR MISS. Closest approach: {miss_dist:.2f} km. Adjust launch timing or angle for a tighter intercept geometry.</div>', unsafe_allow_html=True)
+
+        with col2:
+            fig_int = go.Figure()
+            fig_int.add_trace(go.Scatter(x=mx, y=my, mode='lines', line=dict(color=ACCENT, width=2), name='Akash Missile'))
+            fig_int.add_trace(go.Scatter(x=tx, y=ty, mode='lines', line=dict(color=RED, width=2, dash='dash'), name='Target'))
+            fig_int.add_trace(go.Scatter(x=[0], y=[0], mode='markers', marker=dict(size=10, color=GREEN, symbol='triangle-up'), name='Launch Site'))
+            if intercepted:
+                fig_int.add_trace(go.Scatter(x=[mx[-1]], y=[my[-1]], mode='markers', marker=dict(size=14, color=RED, symbol='x', line=dict(width=2, color='white')), name='Intercept'))
+            fig_int.update_layout(title=dict(text="Intercept Trajectory", font=dict(color=CHART_TITLE, family='Archivo', size=13)),
+                xaxis=dict(title="Range (km)"), yaxis=dict(title="Altitude (km)", scaleanchor='x'))
+            plotly_layout(fig_int, height=420)
+            st.plotly_chart(fig_int, use_container_width=True)
+
+        with st.expander("Physics: Proportional navigation"):
+            st.markdown(f"Proportional navigation steers the missile so its heading rate is proportional to the line-of-sight rate to the target. Instead of pointing directly at the target (pursuit), PN leads the target, flying to where it will be. The key factor is speed ratio: the missile must be significantly faster than the target. Akash at Mach 2.9 ({AKASH_SPEED*3.6:.0f} km/h) has a {speed_ratio:.1f}x advantage over your target at {target_speed_kmh} km/h. A ratio above 1.5x gives reliable intercepts. Below 1.0x, intercept is mathematically impossible in a tail chase.")
 
 
 # ================================================================

@@ -1,6 +1,6 @@
 # VAJRA — Indian Aerospace Physics Simulator
 
-An interactive real-time physics simulator showcasing India's indigenous aerospace capabilities. Built with real engineering parameters across 11 platforms, 3 exploration tools, a quiz, and live satellite tracking.
+An interactive real-time physics simulator showcasing India's indigenous aerospace capabilities. Built with real engineering parameters across 11 platforms, 3 exploration tools, a mission challenge lab, and live satellite tracking.
 
 **Live app:** [vajra-hal-tejas.streamlit.app](https://vajra-hal-tejas.streamlit.app)
 
@@ -26,7 +26,7 @@ An interactive real-time physics simulator showcasing India's indigenous aerospa
 ### Explore
 - **Compare Platforms** — Side-by-side specs and charts for any 2 of 8 platforms
 - **Satellite Orbit Visualizer** — Ground track, orbital velocity, period, Indian satellite reference orbits
-- **Quiz** — 10 physics questions covering all platforms with explanations and scoring
+- **Mission Challenge Lab** — 5 interactive physics challenges: orbit insertion, re-entry survival, stealth penetration, rocket design, missile intercept. Real-time calculations with visual feedback
 
 ## Physics Models
 
