@@ -6,6 +6,7 @@ import json
 import urllib.request
 from sgp4.api import Satrec, WGS72
 from sgp4.api import jday
+from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="VAJRA - Indian Aerospace Simulator", layout="wide", page_icon="⚡")
 
@@ -2024,6 +2025,9 @@ elif page == "Mission Challenge Lab":
 # ================================================================
 elif page == "Live Satellite Tracker":
 
+    refresh_interval = st.sidebar.select_slider("Auto-Refresh", options=[10, 15, 30, 60], value=30, format_func=lambda x: f"{x}s")
+    st_autorefresh(interval=refresh_interval * 1000, key="sat_tracker_refresh")
+
     @st.cache_data(ttl=3600)
     def fetch_tle_data():
         url = "https://celestrak.org/NORAD/elements/gp.php?GROUP=indian&FORMAT=json"
@@ -2113,7 +2117,7 @@ elif page == "Live Satellite Tracker":
 
     st.markdown('<p class="section-header">Live Satellite Tracker</p>', unsafe_allow_html=True)
     if is_live:
-        st.markdown('<div class="alert-box alert-info">Real-time positions from CelesTrak TLE data, propagated using SGP4. Auto-refreshes every hour.</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="alert-box alert-info">LIVE positions from CelesTrak TLE data, propagated using SGP4. Page auto-refreshes every {refresh_interval}s. TLE data updates hourly.</div>', unsafe_allow_html=True)
     else:
         st.markdown('<div class="alert-box alert-warning">Using reference orbital data. Live tracking activates when CelesTrak is reachable.</div>', unsafe_allow_html=True)
 
