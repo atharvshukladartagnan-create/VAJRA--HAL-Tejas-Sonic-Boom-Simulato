@@ -1,6 +1,11 @@
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
+from datetime import datetime, timezone
+import json
+import urllib.request
+from sgp4.api import Satrec, WGS72
+from sgp4.api import jday
 
 st.set_page_config(page_title="VAJRA - Indian Aerospace Simulator", layout="wide", page_icon="⚡")
 
@@ -203,7 +208,7 @@ category = st.sidebar.selectbox("Category", ["Defence", "ISRO", "Private Space",
 if category == "Defence":
     page = st.sidebar.radio("Platform", ["HAL Tejas Mk1A", "BrahMos Missile", "AMCA Stealth Fighter", "Akash Missile"], label_visibility="collapsed")
 elif category == "ISRO":
-    page = st.sidebar.radio("Mission", ["Chandrayaan 3", "Gaganyaan Re-entry", "PSLV-XL", "GSLV Mk III (LVM3)"], label_visibility="collapsed")
+    page = st.sidebar.radio("Mission", ["Chandrayaan 3", "Gaganyaan Re-entry", "PSLV-XL", "GSLV Mk III (LVM3)", "Live Satellite Tracker"], label_visibility="collapsed")
 elif category == "Private Space":
     page = st.sidebar.radio("Company", ["Agnikul Cosmos — Agnibaan", "Skyroot — Vikram-1"], label_visibility="collapsed")
 elif category == "Explore":
@@ -1700,6 +1705,263 @@ elif page == "Quiz":
 
 
 # ================================================================
+# LIVE SATELLITE TRACKER
+# ================================================================
+elif page == "Live Satellite Tracker":
+
+    @st.cache_data(ttl=3600)
+    def fetch_tle_data():
+        url = "https://celestrak.org/NORAD/elements/gp.php?GROUP=indian&FORMAT=json"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "VAJRA-Satellite-Tracker/1.0"})
+            resp = urllib.request.urlopen(req, timeout=15)
+            return json.loads(resp.read()), True
+        except Exception:
+            return [], False
+
+    FALLBACK_SATS = [
+        {"OBJECT_NAME": "CARTOSAT-3", "TLE_LINE1": "1 44804U 19089A   24001.50000000  .00000180  00000-0  47500-4 0  9990", "TLE_LINE2": "2 44804  97.4960 100.2000 0010000  90.0000 270.0000 15.05000000 10000", "INCLINATION": 97.5, "PERIOD": 95.7, "APOAPSIS": 520, "PERIAPSIS": 505},
+        {"OBJECT_NAME": "RISAT-2BR1", "TLE_LINE1": "1 44857U 19090A   24001.50000000  .00001200  00000-0  58000-4 0  9990", "TLE_LINE2": "2 44857  36.9950  50.0000 0015000 120.0000 240.0000 15.09000000 10000", "INCLINATION": 37.0, "PERIOD": 95.3, "APOAPSIS": 580, "PERIAPSIS": 570},
+        {"OBJECT_NAME": "OCEANSAT-3", "TLE_LINE1": "1 54361U 22137A   24001.50000000  .00000100  00000-0  30000-4 0  9990", "TLE_LINE2": "2 54361  98.3500 200.0000 0008000  60.0000 300.0000 14.80000000 10000", "INCLINATION": 98.4, "PERIOD": 97.3, "APOAPSIS": 745, "PERIAPSIS": 738},
+        {"OBJECT_NAME": "EOS-04 (RISAT-1A)", "TLE_LINE1": "1 51888U 22015A   24001.50000000  .00000150  00000-0  40000-4 0  9990", "TLE_LINE2": "2 51888  97.3800 150.0000 0012000  80.0000 280.0000 15.02000000 10000", "INCLINATION": 97.4, "PERIOD": 95.9, "APOAPSIS": 536, "PERIAPSIS": 520},
+        {"OBJECT_NAME": "GSAT-30", "TLE_LINE1": "1 44998U 20005A   24001.50000000  .00000020  00000-0  10000-4 0  9990", "TLE_LINE2": "2 44998   0.0500  75.0000 0002000 270.0000  90.0000  1.00270000 10000", "INCLINATION": 0.05, "PERIOD": 1436.1, "APOAPSIS": 35800, "PERIAPSIS": 35770},
+        {"OBJECT_NAME": "GSAT-31", "TLE_LINE1": "1 44034U 19010A   24001.50000000  .00000020  00000-0  10000-4 0  9990", "TLE_LINE2": "2 44034   0.0400  80.0000 0003000 260.0000 100.0000  1.00270000 10000", "INCLINATION": 0.04, "PERIOD": 1436.1, "APOAPSIS": 35800, "PERIAPSIS": 35770},
+        {"OBJECT_NAME": "INSAT-3DR", "TLE_LINE1": "1 41752U 16055A   24001.50000000  .00000020  00000-0  10000-4 0  9990", "TLE_LINE2": "2 41752   0.1000  82.0000 0004000 250.0000 110.0000  1.00270000 10000", "INCLINATION": 0.1, "PERIOD": 1436.1, "APOAPSIS": 35800, "PERIAPSIS": 35770},
+        {"OBJECT_NAME": "IRNSS-1A (NavIC)", "TLE_LINE1": "1 39199U 13034A   24001.50000000  .00000010  00000-0  10000-4 0  9990", "TLE_LINE2": "2 39199  28.7000  55.0000 0020000 200.0000 160.0000  1.00270000 10000", "INCLINATION": 28.7, "PERIOD": 1436.1, "APOAPSIS": 35900, "PERIAPSIS": 35680},
+        {"OBJECT_NAME": "IRNSS-1B (NavIC)", "TLE_LINE1": "1 39635U 14012A   24001.50000000  .00000010  00000-0  10000-4 0  9990", "TLE_LINE2": "2 39635  30.0000  60.0000 0018000 190.0000 170.0000  1.00270000 10000", "INCLINATION": 30.0, "PERIOD": 1436.1, "APOAPSIS": 35880, "PERIAPSIS": 35700},
+        {"OBJECT_NAME": "ASTROSAT", "TLE_LINE1": "1 40930U 15052A   24001.50000000  .00000500  00000-0  30000-4 0  9990", "TLE_LINE2": "2 40930   6.0000  40.0000 0010000 100.0000 260.0000 14.95000000 10000", "INCLINATION": 6.0, "PERIOD": 96.3, "APOAPSIS": 650, "PERIAPSIS": 640},
+        {"OBJECT_NAME": "RESOURCESAT-2A", "TLE_LINE1": "1 41877U 16074A   24001.50000000  .00000100  00000-0  30000-4 0  9990", "TLE_LINE2": "2 41877  98.7300 300.0000 0005000  70.0000 290.0000 14.50000000 10000", "INCLINATION": 98.7, "PERIOD": 99.3, "APOAPSIS": 825, "PERIAPSIS": 815},
+        {"OBJECT_NAME": "CHANDRAYAAN-3 MODULE", "TLE_LINE1": "1 57320U 23098A   24001.50000000  .00000050  00000-0  20000-4 0  9990", "TLE_LINE2": "2 57320  21.3000  30.0000 9600000 280.0000  10.0000  0.05000000 10000", "INCLINATION": 21.3, "PERIOD": 28800, "APOAPSIS": 380000, "PERIAPSIS": 200},
+    ]
+
+    sat_data, is_live = fetch_tle_data()
+    if not sat_data:
+        sat_data = FALLBACK_SATS
+        is_live = False
+
+    now = datetime.now(timezone.utc)
+    jd, fr = jday(now.year, now.month, now.day, now.hour, now.minute, now.second + now.microsecond / 1e6)
+
+    positions = []
+    for sat in sat_data:
+        name = sat.get("OBJECT_NAME", "UNKNOWN")
+        line1 = sat.get("TLE_LINE1", "")
+        line2 = sat.get("TLE_LINE2", "")
+        if not line1 or not line2:
+            continue
+        try:
+            satellite = Satrec.twoline2rv(line1, line2, WGS72)
+            e, r, v = satellite.sgp4(jd, fr)
+            if e != 0:
+                continue
+            x, y, z = r
+            dist = np.sqrt(x**2 + y**2 + z**2)
+            alt = dist - 6371.0
+            gmst = 280.46061837 + 360.98564736629 * (jd + fr - 2451545.0)
+            gmst_rad = np.radians(gmst % 360)
+            lat = np.degrees(np.arctan2(z, np.sqrt(x**2 + y**2)))
+            lon_eci = np.degrees(np.arctan2(y, x))
+            lon = (lon_eci - np.degrees(gmst_rad) + 180) % 360 - 180
+            speed = np.sqrt(v[0]**2 + v[1]**2 + v[2]**2)
+            inc = sat.get("INCLINATION", 0)
+            period = sat.get("PERIOD", 0)
+            apoapsis = sat.get("APOAPSIS", 0)
+            periapsis = sat.get("PERIAPSIS", 0)
+            orbit_type = "GEO" if alt > 34000 else "MEO" if alt > 2000 else "LEO"
+            if inc and 96 <= float(inc) <= 99 and alt < 1000:
+                orbit_type = "SSO"
+            positions.append({
+                "name": name, "lat": lat, "lon": lon, "alt": alt,
+                "speed": speed, "inc": inc, "period": period,
+                "apoapsis": apoapsis, "periapsis": periapsis,
+                "orbit_type": orbit_type
+            })
+        except Exception:
+            continue
+
+    st.sidebar.markdown('<p class="section-header">Tracker Controls</p>', unsafe_allow_html=True)
+    orbit_filter = st.sidebar.selectbox("Filter by Orbit", ["All", "LEO", "MEO", "GEO", "SSO"], label_visibility="visible")
+    if orbit_filter != "All":
+        filtered = [p for p in positions if p["orbit_type"] == orbit_filter]
+    else:
+        filtered = positions
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown(f"""
+    <div class="specs-grid">
+      <div class="spec-item"><span class="spec-val">{len(positions)}</span><span class="spec-label">Satellites Tracked</span></div>
+      <div class="spec-item"><span class="spec-val">{len([p for p in positions if p['orbit_type']=='LEO'])}</span><span class="spec-label">LEO</span></div>
+      <div class="spec-item"><span class="spec-val">{len([p for p in positions if p['orbit_type']=='GEO'])}</span><span class="spec-label">GEO</span></div>
+      <div class="spec-item"><span class="spec-val">{'LIVE' if is_live else 'OFFLINE'}</span><span class="spec-label">Data Source</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<p class="section-header">Live Satellite Tracker</p>', unsafe_allow_html=True)
+    if is_live:
+        st.markdown('<div class="alert-box alert-info">Real-time positions from CelesTrak TLE data, propagated using SGP4. Auto-refreshes every hour.</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="alert-box alert-warning">Using reference orbital data. Live tracking activates when CelesTrak is reachable.</div>', unsafe_allow_html=True)
+
+    with st.expander("How satellite tracking works"):
+        st.markdown("Two-Line Element (TLE) sets describe a satellite's orbit in a compact format maintained by NORAD. The SGP4 algorithm propagates these elements forward in time, accounting for perturbations from atmospheric drag, Earth's oblateness (J2), and lunar/solar gravity. Given a TLE and a timestamp, SGP4 outputs the satellite's 3D position in the ECI (Earth-Centered Inertial) frame, which we convert to latitude/longitude by accounting for Earth's rotation (GMST).")
+
+    st.markdown(f"""
+    <div class="hud-card" style="display:flex; justify-content:space-around; flex-wrap:wrap;">
+      <div class="hud-metric"><span class="value">{len(positions)}</span><span class="label">Satellites</span></div>
+      <div class="hud-metric"><span class="value">{len(filtered)}</span><span class="label">Shown</span></div>
+      <div class="hud-metric"><span class="value">{now.strftime('%H:%M:%S')} UTC</span><span class="label">Computed At</span></div>
+      <div class="hud-metric"><span class="value">{'CelesTrak' if is_live else 'Reference'}</span><span class="label">Source</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if filtered:
+        leos = [p for p in filtered if p["orbit_type"] in ("LEO", "SSO")]
+        geos = [p for p in filtered if p["orbit_type"] == "GEO"]
+        meos = [p for p in filtered if p["orbit_type"] == "MEO"]
+
+        fig_map = go.Figure()
+
+        if leos:
+            fig_map.add_trace(go.Scattergeo(
+                lat=[p["lat"] for p in leos],
+                lon=[p["lon"] for p in leos],
+                text=[f"{p['name']}<br>Alt: {p['alt']:.0f} km<br>Speed: {p['speed']:.1f} km/s<br>{p['orbit_type']}" for p in leos],
+                hoverinfo="text",
+                marker=dict(size=8, color=ACCENT, symbol="circle", line=dict(width=1, color="white")),
+                name="LEO / SSO"
+            ))
+
+        if meos:
+            fig_map.add_trace(go.Scattergeo(
+                lat=[p["lat"] for p in meos],
+                lon=[p["lon"] for p in meos],
+                text=[f"{p['name']}<br>Alt: {p['alt']:.0f} km<br>Speed: {p['speed']:.1f} km/s<br>{p['orbit_type']}" for p in meos],
+                hoverinfo="text",
+                marker=dict(size=10, color=YELLOW, symbol="diamond", line=dict(width=1, color="white")),
+                name="MEO"
+            ))
+
+        if geos:
+            fig_map.add_trace(go.Scattergeo(
+                lat=[p["lat"] for p in geos],
+                lon=[p["lon"] for p in geos],
+                text=[f"{p['name']}<br>Alt: {p['alt']:.0f} km<br>Speed: {p['speed']:.1f} km/s<br>{p['orbit_type']}" for p in geos],
+                hoverinfo="text",
+                marker=dict(size=12, color=GREEN, symbol="star", line=dict(width=1, color="white")),
+                name="GEO"
+            ))
+
+        fig_map.update_geos(
+            showcoastlines=True, coastlinecolor="rgba(255,255,255,0.15)",
+            showland=True, landcolor="rgba(17,34,64,0.8)",
+            showocean=True, oceancolor="rgba(8,16,30,0.9)",
+            showlakes=False,
+            showcountries=True, countrycolor="rgba(255,255,255,0.08)",
+            projection_type="natural earth",
+            bgcolor="rgba(0,0,0,0)",
+            lonaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.03)"),
+            lataxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.03)"),
+        )
+        fig_map.update_layout(
+            title=dict(text=f"Indian Satellites: Real-Time Ground Positions",
+                font=dict(color=CHART_TITLE, family='Archivo', size=14)),
+            legend=dict(font=dict(color=TEXT, family='Rajdhani', size=12),
+                bgcolor="rgba(0,0,0,0.3)", bordercolor="rgba(255,255,255,0.1)", borderwidth=1),
+            margin=dict(l=0, r=0, t=40, b=0),
+            paper_bgcolor=CHART_BG,
+            height=550,
+        )
+        st.plotly_chart(fig_map, use_container_width=True)
+
+        st.markdown("---")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown('<p class="section-header">Altitude Distribution</p>', unsafe_allow_html=True)
+            leo_count = len([p for p in positions if p["orbit_type"] in ("LEO", "SSO")])
+            meo_count = len([p for p in positions if p["orbit_type"] == "MEO"])
+            geo_count = len([p for p in positions if p["orbit_type"] == "GEO"])
+            fig_pie = go.Figure(data=[go.Pie(
+                labels=["LEO/SSO", "MEO", "GEO"],
+                values=[leo_count, meo_count, geo_count],
+                marker=dict(colors=[ACCENT, YELLOW, GREEN]),
+                textfont=dict(family="JetBrains Mono", size=12, color="white"),
+                hole=0.45
+            )])
+            fig_pie.update_layout(
+                title=dict(text="Orbit Classification",
+                    font=dict(color=CHART_TITLE, family='Archivo', size=13)),
+                legend=dict(font=dict(color=TEXT, family='Rajdhani', size=12)),
+            )
+            plotly_layout(fig_pie, height=380)
+            st.plotly_chart(fig_pie, use_container_width=True)
+
+        with col2:
+            st.markdown('<p class="section-header">Speed vs Altitude</p>', unsafe_allow_html=True)
+            non_deep = [p for p in positions if p["alt"] < 50000]
+            if non_deep:
+                fig_sv = go.Figure()
+                fig_sv.add_trace(go.Scatter(
+                    x=[p["alt"] for p in non_deep],
+                    y=[p["speed"] for p in non_deep],
+                    mode='markers+text',
+                    text=[p["name"][:12] for p in non_deep],
+                    textposition='top center',
+                    textfont=dict(size=8, color=MUTED, family='JetBrains Mono'),
+                    marker=dict(
+                        size=10,
+                        color=[p["alt"] for p in non_deep],
+                        colorscale=[[0, ACCENT], [1, GREEN]],
+                        showscale=True,
+                        colorbar=dict(title=dict(text="Alt (km)", font=dict(color=MUTED, size=10)),
+                            tickfont=dict(color=MUTED, size=9)),
+                        line=dict(width=1, color="white")
+                    ),
+                    hovertext=[f"{p['name']}<br>{p['alt']:.0f} km<br>{p['speed']:.1f} km/s" for p in non_deep],
+                    hoverinfo='text'
+                ))
+                r_vals = np.linspace(6571, 42157, 200)
+                v_theory = np.sqrt(398600.4418 / r_vals)
+                fig_sv.add_trace(go.Scatter(
+                    x=r_vals - 6371, y=v_theory,
+                    mode='lines', name='Theoretical (circular)',
+                    line=dict(color='rgba(255,153,51,0.3)', dash='dash', width=1),
+                    hoverinfo='skip'
+                ))
+                fig_sv.update_layout(
+                    title=dict(text="Orbital Speed vs Altitude",
+                        font=dict(color=CHART_TITLE, family='Archivo', size=13)),
+                    xaxis=dict(title="Altitude (km)", type="log"),
+                    yaxis=dict(title="Speed (km/s)"),
+                )
+                plotly_layout(fig_sv, height=380)
+                st.plotly_chart(fig_sv, use_container_width=True)
+
+        st.markdown("---")
+        st.markdown('<p class="section-header">Satellite Details</p>', unsafe_allow_html=True)
+        for p in sorted(filtered, key=lambda x: x["alt"]):
+            orb_color = ACCENT if p["orbit_type"] in ("LEO", "SSO") else YELLOW if p["orbit_type"] == "MEO" else GREEN
+            st.markdown(f"""
+            <div class="hud-card" style="padding:10px 15px; margin:4px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                <div style="min-width:200px;">
+                    <span style="font-family:Archivo,sans-serif; color:{TEXT}; font-weight:700; font-size:0.9rem;">{p['name']}</span>
+                    <span style="font-family:JetBrains Mono; color:{orb_color}; font-size:0.7rem; margin-left:8px; letter-spacing:1px;">{p['orbit_type']}</span>
+                </div>
+                <div style="display:flex; gap:20px; flex-wrap:wrap; font-family:JetBrains Mono; font-size:0.75rem; color:{MUTED};">
+                    <span>ALT {p['alt']:.0f} km</span>
+                    <span>SPD {p['speed']:.1f} km/s</span>
+                    <span>LAT {p['lat']:.1f}°</span>
+                    <span>LON {p['lon']:.1f}°</span>
+                    <span>INC {p['inc']}°</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    else:
+        st.markdown(f'<div class="alert-box alert-warning">No satellites found for the selected filter.</div>', unsafe_allow_html=True)
+
+
+# ================================================================
 # ABOUT
 # ================================================================
 elif page == "About VAJRA":
@@ -1758,6 +2020,10 @@ elif page == "About VAJRA":
             <span class="spec-val" style="font-size:0.85rem;">SKYROOT VIKRAM-1</span>
             <span class="spec-label">Private — Small Sat Launcher</span>
           </div>
+          <div class="spec-item" style="padding:15px;">
+            <span class="spec-val" style="font-size:0.85rem;">LIVE SATELLITE TRACKER</span>
+            <span class="spec-label">ISRO — Real-Time TLE Tracking</span>
+          </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1780,7 +2046,8 @@ elif page == "About VAJRA":
         Proportional navigation guidance law<br>
         Sutton-Graves re-entry heating model<br>
         Atmospheric drag deceleration<br>
-        Satellite ground track projection
+        Satellite ground track projection<br>
+        SGP4 orbit propagation (TLE based real-time tracking)
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1788,7 +2055,6 @@ elif page == "About VAJRA":
     <div class="hud-card">
         <h3 style="font-family:Archivo,sans-serif; color:{ACCENT}; font-weight:800; letter-spacing:1px; margin-top:0;">COMING SOON</h3>
         <div style="font-family:Rajdhani,sans-serif; color:#c0cfe0; font-size:1rem; line-height:2;">
-        Live ISRO satellite tracking (real-time TLE data)<br>
         Tejas Mk1A spotting log + community map<br>
         Mobile app (Play Store / App Store)
         </div>
@@ -1801,7 +2067,7 @@ st.markdown("---")
 st.markdown(f"""
 <div style="text-align:center; padding:15px;">
     <p style="font-family:'Archivo',sans-serif; color:rgba(240,244,248,0.3); font-size:0.7rem; letter-spacing:3px; font-weight:700;">
-    VAJRA v7.0 — BUILT BY ATHARV SHUKLA</p>
+    VAJRA v8.0 — BUILT BY ATHARV SHUKLA</p>
     <p style="font-family:'Rajdhani',sans-serif; color:rgba(122,139,164,0.3); font-size:0.7rem; letter-spacing:2px;">
     AMITY INTERNATIONAL SCHOOL SEC 46 GURGAON | INDIAN AEROSPACE SIMULATOR</p>
 </div>

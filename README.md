@@ -1,6 +1,6 @@
 # VAJRA — Indian Aerospace Physics Simulator
 
-An interactive real-time physics simulator showcasing India's indigenous aerospace capabilities. Built with real engineering parameters across 10 platforms, 3 exploration tools, and a quiz.
+An interactive real-time physics simulator showcasing India's indigenous aerospace capabilities. Built with real engineering parameters across 11 platforms, 3 exploration tools, a quiz, and live satellite tracking.
 
 **Live app:** [vajra-hal-tejas.streamlit.app](https://vajra-hal-tejas.streamlit.app)
 
@@ -17,6 +17,7 @@ An interactive real-time physics simulator showcasing India's indigenous aerospa
 - **Gaganyaan Re-entry** — Atmospheric re-entry simulation, G-force profile, heat shield stagnation temperature, parachute deployment phases, adjustable entry angle
 - **PSLV-XL** — 4-stage launch trajectory, velocity/G-force profiles, stage separation events
 - **GSLV Mk III (LVM3)** — 3-stage heavy-lift trajectory with cryogenic upper stage
+- **Live Satellite Tracker** — Real-time Indian satellite positions from CelesTrak TLE data, SGP4 orbit propagation, ground position map, orbit classification, speed vs altitude analysis
 
 ### Private Space
 - **Agnikul Cosmos (Agnibaan)** — 3D-printed Agnilet engine, 2-stage launch simulation
@@ -42,6 +43,7 @@ An interactive real-time physics simulator showcasing India's indigenous aerospa
 | Proportional navigation | Missile intercept guidance law |
 | Sutton-Graves heating | Re-entry stagnation point temperature |
 | Satellite ground track | Orbital projection onto Earth surface |
+| SGP4 orbit propagation | Real-time satellite position from TLE data |
 
 ## Tech Stack
 
@@ -52,13 +54,12 @@ An interactive real-time physics simulator showcasing India's indigenous aerospa
 ## Run Locally
 
 ```bash
-pip install streamlit plotly numpy
+pip install streamlit plotly numpy sgp4
 streamlit run vajra.py
 ```
 
 ## Roadmap
 
-- Live ISRO satellite tracking (real-time TLE data)
 - Tejas Mk1A spotting log + community map
 - Mobile app (Play Store / App Store)
 
